@@ -1,7 +1,11 @@
 {
   "version": 2,
   "env": {
-    "WINNING_CHANCE": "100"
+    "WINNING_CHANCE": "100",
+    "DATABASE_URL": "postgresql://postgres:RnmM8SjKcNGGEUR0@qnacpqdjqleveyjqeyaw.supabase.co:5432/postgres",
+    "ADMIN_USERNAME": "admin",
+    "ADMIN_PASSWORD": "password",
+    "JWT_SECRET": "super-secret-jwt-key-for-development-only"
   },
   "builds": [
     {
