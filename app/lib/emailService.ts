@@ -1,18 +1,24 @@
 import nodemailer from 'nodemailer';
 
 // Tipos para as funções de e-mail
-type EmailData = {
+interface EmailData {
   to: string;
   subject: string;
   text: string;
   html?: string;
-};
+}
 
-type WinnerData = {
+interface WinnerData {
   userName: string;
   userEmail: string;
   prizeName: string;
-};
+}
+
+interface EmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
 
 // Criar transporte de e-mail
 // Em produção, você usaria um serviço real como SendGrid, AWS SES, etc.
@@ -42,7 +48,7 @@ const createTransporter = () => {
 };
 
 // Enviar e-mail para vencedor
-export const sendWinnerEmail = async (winnerData: WinnerData) => {
+export const sendWinnerEmail = async (winnerData: WinnerData): Promise<EmailResult> => {
   try {
     const transporter = createTransporter();
     
@@ -87,6 +93,8 @@ Equipe Rifa Premiada`,
     } else {
       // Em desenvolvimento, apenas logar o e-mail
       console.log('E-mail (simulado):', mailOptions);
+      // Simular envio de e-mail em desenvolvimento
+      await new Promise(resolve => setTimeout(resolve, 100));
       return { success: true, messageId: 'simulated-email-id' };
     }
   } catch (error) {
@@ -96,7 +104,7 @@ Equipe Rifa Premiada`,
 };
 
 // Enviar notificação para administradores
-export const sendAdminNotification = async (subject: string, message: string) => {
+export const sendAdminNotification = async (subject: string, message: string): Promise<EmailResult> => {
   try {
     const transporter = createTransporter();
     
@@ -116,6 +124,8 @@ export const sendAdminNotification = async (subject: string, message: string) =>
     } else {
       // Em desenvolvimento, apenas logar
       console.log('Notificação (simulada):', mailOptions);
+      // Simular envio de e-mail em desenvolvimento
+      await new Promise(resolve => setTimeout(resolve, 100));
       return { success: true, messageId: 'simulated-notification-id' };
     }
   } catch (error) {
