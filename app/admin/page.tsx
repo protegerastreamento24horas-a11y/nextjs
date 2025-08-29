@@ -12,6 +12,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+import { useRouter } from "next/navigation";
 
 ChartJS.register(
   CategoryScale,
@@ -56,14 +57,40 @@ export default function AdminPanel() {
   const [newWinningChance, setNewWinningChance] = useState(100);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [user, setUser] = useState<{username: string, role: string} | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
+    checkAuth();
     fetchData();
-    // Carregar a chance atual de vitória
-    const currentChance = parseInt(process.env.WINNING_CHANCE || '100');
-    setWinningChance(currentChance);
-    setNewWinningChance(currentChance);
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        router.push('/admin/login');
+        return;
+      }
+
+      const response = await fetch('/api/admin/auth', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        router.push('/admin/login');
+        return;
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+    } catch (error) {
+      console.error("Erro na autenticação:", error);
+      router.push('/admin/login');
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -120,10 +147,12 @@ export default function AdminPanel() {
 
   const updateWinningChance = async () => {
     try {
+      const token = localStorage.getItem('admin_token');
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`
         },
         body: JSON.stringify({ winningChance: newWinningChance }),
       });
@@ -132,12 +161,18 @@ export default function AdminPanel() {
         setWinningChance(newWinningChance);
         alert(`Chance de vitória atualizada para 1 em ${newWinningChance}`);
       } else {
-        alert('Erro ao atualizar a chance de vitória');
+        const data = await response.json();
+        alert(data.error || 'Erro ao atualizar a chance de vitória');
       }
     } catch (error) {
       console.error("Erro ao atualizar chance de vitória:", error);
       alert('Erro ao atualizar a chance de vitória');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    router.push('/admin/login');
   };
 
   // Dados para o gráfico de barras

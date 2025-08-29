@@ -1,34 +1,68 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import * as jose from 'jose';
 
-// Lista de IPs permitidos para acessar o painel administrativo
-// Em produção, você deve usar autenticação real
-const allowedIPs = [
-  // Adicione IPs específicos aqui se necessário
-  // '192.168.1.1',
-];
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Rotas públicas que não requerem autenticação
+  const publicPaths = [
+    '/',
+    '/api/comprar',
+    '/admin/login'
+  ];
+  
+  // Verificar se a rota é pública
+  const isPublicPath = publicPaths.some(path => pathname === path);
+  
   // Proteger rotas administrativas
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-    // Em uma implementação real, você implementaria autenticação adequada
-    // Por enquanto, vamos apenas registrar o acesso
-    console.log(`Acesso à área administrativa: ${pathname}`);
+  if (pathname.startsWith('/admin') && !isPublicPath) {
+    // Verificar token de autenticação
+    const authHeader = request.headers.get('authorization');
+    const token = request.cookies.get('admin_token')?.value;
     
-    // Verificar IP (opcional)
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'IP desconhecido';
+    // Se não tem token no header, verificar no cookie
+    const authToken = authHeader?.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : token;
     
-    // Se quiser restringir por IP, descomente o código abaixo:
-    /*
-    if (allowedIPs.length > 0 && !allowedIPs.includes(ip)) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Acesso não autorizado' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!authToken) {
+      // Redirecionar para login se for acesso via navegador
+      if (pathname !== '/admin/login') {
+        return NextResponse.redirect(new URL('/admin/login', request.url));
+      }
+      return NextResponse.next();
     }
-    */
+    
+    // Verificar token JWT
+    try {
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'super-secret-jwt-key'
+      );
+      
+      await jose.jwtVerify(authToken, secret);
+      
+      // Se for uma requisição para a API, continuar
+      if (pathname.startsWith('/api/admin')) {
+        return NextResponse.next();
+      }
+      
+      // Se for acesso ao painel web, continuar
+      const response = NextResponse.next();
+      // Atualizar cookie com token válido
+      response.cookies.set('admin_token', authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24, // 24 horas
+        path: '/',
+      });
+      return response;
+    } catch (error) {
+      // Token inválido, redirecionar para login
+      const response = NextResponse.redirect(new URL('/admin/login', request.url));
+      response.cookies.delete('admin_token');
+      return response;
+    }
   }
   
   return NextResponse.next();

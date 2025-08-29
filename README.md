@@ -13,6 +13,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 
 ### Para Administradores:
 - Painel administrativo em `/admin` com navegação por abas
+- Sistema de autenticação seguro
 - Listagem de todos os bilhetes comprados
 - Exibição de estatísticas de vendas com gráficos
 - Visualização dos vencedores
@@ -26,6 +27,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Tailwind CSS para estilização
 - Prisma ORM com PostgreSQL
 - Chart.js para gráficos
+- JWT para autenticação
 - Banco de dados PostgreSQL (Supabase)
 
 ## Como Executar
@@ -40,35 +42,47 @@ npm install
 npx prisma generate
 ```
 
-3. Inicie o servidor de desenvolvimento:
+3. Configure as variáveis de ambiente no arquivo `.env`:
+```env
+ADMIN_USERNAME=seu_usuario
+ADMIN_PASSWORD=sua_senha
+JWT_SECRET=sua_chave_secreta_segura
+```
+
+4. Inicie o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
 
-4. Acesse o aplicativo em `http://localhost:3000`
+5. Acesse o aplicativo:
+- Página principal: `http://localhost:3000`
+- Painel administrativo: `http://localhost:3000/admin`
 
 ## Estrutura do Projeto
 
 ```
 app/
-  ├── page.tsx              # Página principal da rifa
-  ├── layout.tsx            # Layout raiz com navegação
-  ├── middleware.ts         # Middleware de segurança
+  ├── page.tsx                 # Página principal da rifa
+  ├── layout.tsx               # Layout raiz com navegação
+  ├── middleware.ts            # Middleware de segurança
   ├── api/
-  │   ├── comprar/route.ts  # Endpoint de compra e sorteio
+  │   ├── comprar/route.ts     # Endpoint de compra e sorteio
   │   └── admin/
-  │       ├── tickets/route.ts   # Endpoint para listar bilhetes
-  │       ├── winners/route.ts   # Endpoint para listar vencedores
-  │       └── settings/route.ts  # Endpoint para configurações
+  │       ├── auth/route.ts    # Endpoint de autenticação
+  │       ├── tickets/route.ts # Endpoint para listar bilhetes
+  │       ├── winners/route.ts # Endpoint para listar vencedores
+  │       └── settings/route.ts# Endpoint para configurações
   └── admin/
-      └── page.tsx          # Painel administrativo
+      ├── page.tsx             # Painel administrativo
+      └── login/page.tsx       # Página de login
 prisma/
-  └── schema.prisma         # Definição do banco de dados
+  └── schema.prisma            # Definição do banco de dados
 ```
 
 ## Segurança
 
 - Middleware para proteção de rotas administrativas
+- Autenticação JWT para acesso ao painel administrativo
 - Rastreamento de IP e user agent dos usuários
 - Validação de dados de entrada
 
@@ -83,6 +97,9 @@ A chance de vitória pode ser configurada no arquivo `.env` através da variáve
 3. Configure as variáveis de ambiente necessárias:
    - `DATABASE_URL`: URL do seu banco de dados PostgreSQL
    - `WINNING_CHANCE`: Chance de vitória (padrão: 100)
+   - `ADMIN_USERNAME`: Nome de usuário administrador
+   - `ADMIN_PASSWORD`: Senha do administrador
+   - `JWT_SECRET`: Chave secreta para JWT
 4. Faça o deploy clicando em "Deploy"
 
 ## Personalização
@@ -105,9 +122,11 @@ Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exib
    - Navegação por abas
    - Gráficos de estatísticas (Chart.js)
    - Dashboard com métricas em tempo real
+   - Sistema de autenticação seguro
    - Configurações avançadas
 
 4. **Performance e Segurança**:
    - Middleware de segurança para rotas administrativas
+   - Autenticação JWT para acesso ao painel
    - Validação de entrada aprimorada
    - Estrutura de código mais organizada
