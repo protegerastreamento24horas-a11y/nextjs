@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Modelo para os bilhetes das rifas
+model Ticket {
+  id          String   @id @default(uuid())
+  userName    String
+  userEmail   String?
+  purchaseDate DateTime @default(now())
+  isWinner    Boolean  @default(false)
+  winner      Winner?
+}
+
+// Modelo para os vencedores
+model Winner {
+  id          String   @id @default(uuid())
+  ticketId    String   @unique
+  userName    String
+  userEmail   String?
+  prizeDate   DateTime @default(now())
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+}

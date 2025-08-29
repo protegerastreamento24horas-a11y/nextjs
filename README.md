@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Rifas Automáticas
 
-## Getting Started
+Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que permite aos usuários comprar bilhetes e participar de sorteios com resultados imediatos.
 
-First, run the development server:
+## Funcionalidades
 
+### Para Usuários:
+- Página inicial com informações da rifa
+- Compra de bilhetes com sorteio automático
+- Exibição de resultados imediatos ("Parabéns, você ganhou!" ou "Não foi dessa vez")
+- Visualização dos últimos vencedores
+
+### Para Administradores:
+- Painel administrativo em `/admin`
+- Listagem de todos os bilhetes comprados
+- Exibição de estatísticas de vendas
+- Visualização dos vencedores
+- Configuração da chance de vitória
+
+## Tecnologias Utilizadas
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS para estilização
+- Prisma ORM com SQLite
+- Banco de dados SQLite
+
+## Como Executar
+
+1. Instale as dependências:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure o banco de dados:
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Acesse o aplicativo em `http://localhost:3000`
 
-## Learn More
+## Estrutura do Projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/
+  ├── page.tsx              # Página principal da rifa
+  ├── layout.tsx            # Layout raiz com navegação
+  ├── api/
+  │   ├── comprar/route.ts  # Endpoint de compra e sorteio
+  │   └── admin/
+  │       ├── tickets/route.ts   # Endpoint para listar bilhetes
+  │       ├── winners/route.ts   # Endpoint para listar vencedores
+  │       └── settings/route.ts  # Endpoint para configurações
+  └── admin/
+      └── page.tsx          # Painel administrativo
+prisma/
+  └── schema.prisma         # Definição do banco de dados
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Configuração
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A chance de vitória pode ser configurada no arquivo `.env` através da variável `WINNING_CHANCE`. O valor padrão é 100, o que significa uma chance de 1 em 100 (1%).
 
-## Deploy on Vercel
+## Personalização
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exibição do prêmio na página principal (`app/page.tsx`).
