@@ -195,7 +195,6 @@ export async function GET() {
       },
       take: 10, // Últimos 10 vencedores
       include: {
-        ticket: true,
         prize: true
       }
     });
