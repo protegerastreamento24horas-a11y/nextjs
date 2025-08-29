@@ -1,100 +1,13 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { sendWinnerEmail } from '@/app/lib/emailService';
-import HorsePayService from '@/app/lib/horsepayService';
 
 const prisma = new PrismaClient();
-const horsepay = new HorsePayService();
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userName, userEmail, ticketPrice } = body;
-    
-    // Obter informações de rastreamento
-    const ip = request.headers.get('x-forwarded-for') || 'IP desconhecido';
-    const userAgent = request.headers.get('user-agent') || 'User agent desconhecido';
-
-    // Validar dados
-    if (!userName) {
-      return NextResponse.json(
-        { error: 'Nome é obrigatório' },
-        { status: 400 }
-      );
-    }
-
-    // Obter configuração da rifa
-    let raffleConfig = await prisma.raffleConfig.findFirst({
-      where: { isActive: true }
-    });
-
-    // Se não houver configuração, criar uma padrão
-    if (!raffleConfig) {
-      raffleConfig = await prisma.raffleConfig.create({
-        data: {
-          ticketPrice: 1000, // R$ 1.000,00
-          prizeValue: 10000, // R$ 10.000,00
-          maxNumber: 10000,  // Sorteio entre 1 e 10.000
-          winningNumbers: "100,88,14", // Números premiados padrão
-          autoDrawnNumbers: 1, // 1 número sorteado automaticamente
-          winningProbability: 100 // 100% de probabilidade
-        }
-      });
-    }
-
-    // Criar o bilhete temporariamente (ainda não confirmado)
-    const ticket = await prisma.ticket.create({
-      data: {
-        userName,
-        userEmail: userEmail || null,
-        ip,
-        userAgent,
-      },
-    });
-
-    // Criar pedido na HorsePay
-    const order = await horsepay.createOrder(
-      userName,
-      ticketPrice || raffleConfig.ticketPrice,
-      [
-        {
-          user: "admin",
-          percent: 100
-        }
-      ]
-    );
-
-    // Atualizar bilhete com o ID do pedido
-    await prisma.ticket.update({
-      where: { id: ticket.id },
-      data: { 
-        drawnNumbers: order.external_id.toString(),
-        // O status do pagamento será atualizado via webhook
-      }
-    });
-
-    // Retornar informações do pedido para exibição no frontend
-    return NextResponse.json({
-      ticketId: ticket.id,
-      qrCode: order.payment, // Base64 da imagem do QR Code
-      copyPaste: order.copy_past, // Código PIX copia e cola
-      externalId: order.external_id,
-      message: "Pedido criado com sucesso. Efetue o pagamento via PIX para confirmar sua participação."
-    });
-
-  } catch (error) {
-    console.error("Erro ao processar compra:", error);
-    return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 }
-    );
-  }
-}
-
-// Endpoint para receber webhooks da HorsePay
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
+    console.log('Webhook HorsePay recebido:', body);
     
     // Verificar se é um callback de pagamento
     if (body.external_id && body.status !== undefined) {
@@ -130,10 +43,8 @@ export async function PUT(request: Request) {
           // Se a probabilidade for 0, nunca ganha
           if (raffleConfig.winningProbability === 0) {
             // Não há chance de ganhar
-            return NextResponse.json({
-              success: true,
-              message: "Pagamento confirmado, mas sem chance de ganhar."
-            });
+            console.log(`Bilhete ${ticket.id} pago, mas sem chance de ganhar.`);
+            return NextResponse.json({ success: true });
           }
 
           // Sortear números automaticamente
@@ -180,30 +91,31 @@ export async function PUT(request: Request) {
             if (ticket.userEmail) {
               await sendWinnerEmail(ticket.userEmail, ticket.userName, prize);
             }
+            
+            console.log(`Bilhete ${ticket.id} é vencedor!`);
+          } else {
+            console.log(`Bilhete ${ticket.id} pago, mas não foi sorteado.`);
           }
 
-          return NextResponse.json({
-            success: true,
-            message: "Pagamento confirmado e sorteio realizado."
-          });
+          return NextResponse.json({ success: true });
         } else {
           // Pagamento não confirmado
           await prisma.ticket.update({
             where: { id: ticket.id },
             data: { isWinner: false }
           });
-
-          return NextResponse.json({
-            success: true,
-            message: "Status do pagamento atualizado."
-          });
+          
+          console.log(`Pagamento do bilhete ${ticket.id} não confirmado.`);
+          return NextResponse.json({ success: true });
         }
+      } else {
+        console.log(`Bilhete com external_id ${body.external_id} não encontrado.`);
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erro ao processar webhook:", error);
+    console.error("Erro ao processar webhook HorsePay:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

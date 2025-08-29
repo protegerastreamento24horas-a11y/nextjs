@@ -19,6 +19,11 @@ export default function Home() {
   const [winners, setWinners] = useState<Winner[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [ticketPrice, setTicketPrice] = useState(1000); // Preço padrão R$ 1.000,00
+  
+  // Estados para pagamento PIX
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [copyPaste, setCopyPaste] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWinners();
@@ -76,6 +81,9 @@ export default function Home() {
     e.preventDefault();
     setIsLoading(true);
     setResult(null);
+    setQrCode(null);
+    setCopyPaste(null);
+    setTicketId(null);
 
     try {
       const response = await fetch("/api/comprar", {
@@ -83,106 +91,117 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userName, userEmail }),
+        body: JSON.stringify({ userName, userEmail, ticketPrice }),
       });
 
       const data = await response.json();
-      setResult(data);
-      // Atualizar a lista de vencedores após uma nova compra
-      if (data.isWinner) {
-        setTimeout(fetchWinners, 1000);
+      
+      if (response.ok) {
+        // Exibir QR Code para pagamento
+        setQrCode(data.qrCode);
+        setCopyPaste(data.copyPaste);
+        setTicketId(data.ticketId);
+      } else {
+        setResult({
+          isWinner: false,
+          message: data.error || "Erro ao processar compra"
+        });
       }
     } catch (error) {
-      console.error("Erro ao comprar bilhete:", error);
+      console.error("Erro ao processar compra:", error);
       setResult({
         isWinner: false,
-        message: "Ocorreu um erro ao processar sua solicitação. Tente novamente."
+        message: "Erro ao processar compra. Por favor, tente novamente."
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const copyToClipboard = () => {
+    if (copyPaste) {
+      navigator.clipboard.writeText(copyPaste);
+      alert("Código PIX copiado para a área de transferência!");
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 md:p-8 pb-20 gap-8 sm:p-20 bg-gradient-to-b from-purple-900 to-black text-white">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start max-w-6xl w-full">
-        <div className="text-center w-full">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent mb-4 animate-pulse">
-            Rifa Premiada
-          </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-6">
-            Compre seu bilhete e concorra a prêmios incríveis!
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 md:p-8">
+      <header className="text-center mb-12">
+        <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent py-4">
+          Rifa Premiada
+        </h1>
+        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          Participe da nossa rifa automática e concorra a prêmios incríveis com pagamento via PIX!
+        </p>
+      </header>
 
-        {/* Contador regressivo */}
-        <div className="w-full bg-gradient-to-r from-purple-800 to-indigo-900 rounded-2xl p-6 text-center shadow-xl border border-purple-700">
-          <h2 className="text-2xl font-bold mb-4">Próximo Sorteio</h2>
-          <div className="flex justify-center gap-2 md:gap-4">
-            <div className="flex flex-col items-center">
-              <div className="bg-black/30 rounded-lg p-2 md:p-4 w-16 md:w-20">
-                <span className="text-2xl md:text-3xl font-bold">{countdown.days}</span>
-              </div>
-              <span className="text-xs md:text-sm mt-2 text-gray-300">Dias</span>
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+        {/* Informações da rifa */}
+        <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
+          <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden mb-6">
+            <div className="bg-gradient-to-br from-purple-500 to-pink-600 w-full h-full flex items-center justify-center">
+              <span className="text-4xl font-bold">PRÊMIOS ESPECIAIS</span>
             </div>
-            <div className="flex flex-col items-center">
-              <div className="bg-black/30 rounded-lg p-2 md:p-4 w-16 md:w-20">
-                <span className="text-2xl md:text-3xl font-bold">{countdown.hours}</span>
-              </div>
-              <span className="text-xs md:text-sm mt-2 text-gray-300">Horas</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Como Funciona</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h3 className="font-bold text-yellow-400 mb-2">Mecânica da Rifa</h3>
+              <ul className="text-sm space-y-1">
+                <li>• Cada bilhete custa R$ {ticketPrice.toFixed(2)}</li>
+                <li>• Pagamento feito via PIX</li>
+                <li>• Sistema sorteia um número entre 1 e 10.000</li>
+                <li>• Números premiados: 100, 88 e 14</li>
+              </ul>
             </div>
-            <div className="flex flex-col items-center">
-              <div className="bg-black/30 rounded-lg p-2 md:p-4 w-16 md:w-20">
-                <span className="text-2xl md:text-3xl font-bold">{countdown.minutes}</span>
-              </div>
-              <span className="text-xs md:text-sm mt-2 text-gray-300">Minutos</span>
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h3 className="font-bold text-yellow-400 mb-2">Premiação</h3>
+              <ul className="text-sm space-y-1">
+                <li>• Prêmios variados por raridade</li>
+                <li>• Smartphone premium</li>
+                <li>• Viagens nacionais</li>
+                <li>• Itens de alto valor</li>
+              </ul>
             </div>
-            <div className="flex flex-col items-center">
-              <div className="bg-black/30 rounded-lg p-2 md:p-4 w-16 md:w-20">
-                <span className="text-2xl md:text-3xl font-bold">{countdown.seconds}</span>
-              </div>
-              <span className="text-xs md:text-sm mt-2 text-gray-300">Segundos</span>
-            </div>
+          </div>
+          <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 p-4 rounded-lg">
+            <p className="text-center font-bold text-lg">Valor do bilhete: R$ {ticketPrice.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-          {/* Informações da rifa */}
-          <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
-            <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden mb-6">
-              <div className="bg-gradient-to-br from-purple-500 to-pink-600 w-full h-full flex items-center justify-center">
-                <span className="text-4xl font-bold">PRÊMIOS ESPECIAIS</span>
+        {/* Formulário de compra ou QR Code */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            {qrCode ? "Pague com PIX" : "Comprar Bilhete"}
+          </h2>
+          
+          {qrCode ? (
+            <div className="text-center">
+              <div className="bg-white p-4 rounded-lg inline-block">
+                <img 
+                  src={`data:image/png;base64,${qrCode}`} 
+                  alt="QR Code para pagamento PIX" 
+                  className="w-64 h-64"
+                />
               </div>
-            </div>
-            <h2 className="text-2xl font-bold mb-4">Como Funciona</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Mecânica da Rifa</h3>
-                <ul className="text-sm space-y-1">
-                  <li>• Cada bilhete custa R$ {ticketPrice.toFixed(2)}</li>
-                  <li>• Pagamento feito via PIX</li>
-                  <li>• Sistema sorteia um número entre 1 e 10.000</li>
-                  <li>• Números premiados: 100, 88 e 14</li>
-                </ul>
+              <p className="mt-4 text-sm text-gray-300">
+                Aponte a câmera do seu celular para o QR Code acima ou copie o código abaixo:
+              </p>
+              <div className="mt-2 p-3 bg-gray-700 rounded-lg flex justify-between items-center">
+                <span className="text-xs font-mono break-all">{copyPaste}</span>
+                <button 
+                  onClick={copyToClipboard}
+                  className="ml-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm"
+                >
+                  Copiar
+                </button>
               </div>
-              <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Premiação</h3>
-                <ul className="text-sm space-y-1">
-                  <li>• Prêmios variados por raridade</li>
-                  <li>• Smartphone premium</li>
-                  <li>• Viagens nacionais</li>
-                  <li>• Itens de alto valor</li>
-                </ul>
-              </div>
+              <p className="mt-4 text-sm text-yellow-400">
+                Após o pagamento, seu bilhete será automaticamente registrado e o sorteio será realizado!
+              </p>
             </div>
-            <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 p-4 rounded-lg">
-              <p className="text-center font-bold text-lg">Valor do bilhete: R$ {ticketPrice.toFixed(2)}</p>
-            </div>
-          </div>
-
-          {/* Formulário de compra */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
-            <h2 className="text-2xl font-bold mb-4 text-center">Comprar Bilhete</h2>
+          ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="name" className="block mb-2 font-medium">
@@ -229,26 +248,26 @@ export default function Home() {
                 {isLoading ? "Processando..." : "Comprar Bilhete por R$ " + ticketPrice.toFixed(2)}
               </button>
             </form>
+          )}
 
-            {/* Resultado do sorteio */}
-            {result && (
-              <div className={`mt-6 p-4 rounded-lg text-center animate-bounce ${result.isWinner ? 'bg-gradient-to-r from-green-600 to-emerald-700' : 'bg-gradient-to-r from-red-600 to-rose-700'}`}>
-                <p className="text-2xl font-bold mb-2">
-                  {result.isWinner ? "🎉 Parabéns! 🎉" : "😢 Não foi dessa vez 😢"}
-                </p>
-                <p>{result.message}</p>
-                {result.drawnNumbers && result.drawnNumbers.length > 0 && (
-                  <p className="mt-2 font-bold">Seus números sorteados: {result.drawnNumbers.join(', ')}</p>
-                )}
-                {result.isWinner && result.prize && (
-                  <div className="mt-4 p-3 bg-white/10 rounded-lg">
-                    <p className="font-bold">Prêmio: {result.prize.name}</p>
-                    <p className="text-sm">Valor estimado: R$ {result.prize.value.toFixed(2)}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Resultado do sorteio */}
+          {result && (
+            <div className={`mt-6 p-4 rounded-lg text-center animate-bounce ${result.isWinner ? 'bg-gradient-to-r from-green-600 to-emerald-700' : 'bg-gradient-to-r from-red-600 to-rose-700'}`}>
+              <p className="text-2xl font-bold mb-2">
+                {result.isWinner ? "🎉 Parabéns! 🎉" : "😢 Não foi dessa vez 😢"}
+              </p>
+              <p>{result.message}</p>
+              {result.drawnNumbers && result.drawnNumbers.length > 0 && (
+                <p className="mt-2 font-bold">Seus números sorteados: {result.drawnNumbers.join(', ')}</p>
+              )}
+              {result.isWinner && result.prize && (
+                <div className="mt-4 p-3 bg-white/10 rounded-lg">
+                  <p className="font-bold">Prêmio: {result.prize.name}</p>
+                  <p className="text-sm">Valor estimado: R$ {result.prize.value.toFixed(2)}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Últimos vencedores */}
@@ -276,7 +295,7 @@ export default function Home() {
           )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center mt-8">
         <p className="text-gray-400">© 2024 Rifa Premiada. Todos os direitos reservados.</p>
       </footer>
     </div>

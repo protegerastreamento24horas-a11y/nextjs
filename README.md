@@ -11,6 +11,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Exibição de resultados imediatos ("Parabéns, você ganhou!" ou "Não foi dessa vez")
 - Envio automático de e-mails para vencedores
 - Visualização dos últimos vencedores
+- Pagamento via PIX integrado
 
 ### Para Administradores:
 - Painel administrativo em `/admin` com navegação por abas
@@ -107,6 +108,32 @@ SMTP_USER=seu@email.com
 SMTP_PASS=sua_senha
 ```
 
+## Sistema de Pagamentos PIX
+
+O sistema está integrado com a HorsePay para processamento de pagamentos PIX.
+
+### HorsePay (Provedor principal)
+
+1. Crie uma conta na [HorsePay](https://horsepay.io/)
+2. Obtenha suas credenciais no painel de desenvolvedor
+3. Configure as seguintes variáveis de ambiente:
+```env
+HORSEPAY_CLIENT_KEY=sua_client_key
+HORSEPAY_CLIENT_SECRET=sua_client_secret
+HORSEPAY_CALLBACK_URL=https://seudominio.com/api/pix/webhook
+```
+
+4. O sistema irá gerar QR Codes PIX para pagamento e processar os webhooks automaticamente.
+
+### Configurações adicionais do PIX
+Além das credenciais específicas da HorsePay, configure também:
+```env
+MERCHANT_NAME=Nome da sua empresa
+MERCHANT_CITY=Cidade
+POS_ID=POS00001
+WEBHOOK_URL=https://seudominio.com/api/pix/webhook
+```
+
 ## Configuração
 
 A chance de vitória pode ser configurada no arquivo `.env` através da variável `WINNING_CHANCE`. O valor padrão é 100, o que significa uma chance de 1 em 100 (1%).
@@ -127,6 +154,7 @@ A chance de vitória pode ser configurada no arquivo `.env` através da variáve
    - `SMTP_SECURE`: Usar conexão segura (opcional)
    - `SMTP_USER`: Usuário SMTP (opcional)
    - `SMTP_PASS`: Senha SMTP (opcional)
+   - Credenciais da API PIX HorsePay (obrigatório)
 4. Faça o deploy clicando em "Deploy"
 
 ## Personalização
@@ -139,12 +167,14 @@ Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exib
    - Adicionado contador regressivo para o próximo sorteio
    - Melhorias visuais com animações e gradientes
    - Layout responsivo otimizado
+   - Integração com pagamento PIX
 
 2. **Funcionalidades do Sistema**:
    - Rastreamento de IP e user agent dos usuários
    - Validação de dados aprimorada
    - Tratamento de erros melhorado
    - Sistema de envio de e-mails automático
+   - Integração com pagamento via PIX HorsePay
 
 3. **Painel Administrativo**:
    - Navegação por abas
