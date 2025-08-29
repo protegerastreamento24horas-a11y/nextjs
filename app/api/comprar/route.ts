@@ -5,12 +5,16 @@ const prisma = new PrismaClient();
 
 // Chance de vitória: 1 em 100 (1%)
 // Esta chance pode ser configurada via variável de ambiente
-const WINNING_CHANCE = parseInt(process.env.WINNING_CHANCE || '100');
+let WINNING_CHANCE = parseInt(process.env.WINNING_CHANCE || '100');
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { userName, userEmail } = body;
+    
+    // Obter informações de rastreamento
+    const ip = request.headers.get('x-forwarded-for') || 'IP desconhecido';
+    const userAgent = request.headers.get('user-agent') || 'User agent desconhecido';
 
     // Validar dados
     if (!userName) {
@@ -25,6 +29,8 @@ export async function POST(request: Request) {
       data: {
         userName,
         userEmail: userEmail || null,
+        ip,
+        userAgent,
       },
     });
 

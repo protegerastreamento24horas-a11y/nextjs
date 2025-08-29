@@ -6,16 +6,18 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 
 ### Para Usuários:
 - Página inicial com informações da rifa
+- Contador regressivo para o próximo sorteio
 - Compra de bilhetes com sorteio automático
 - Exibição de resultados imediatos ("Parabéns, você ganhou!" ou "Não foi dessa vez")
 - Visualização dos últimos vencedores
 
 ### Para Administradores:
-- Painel administrativo em `/admin`
+- Painel administrativo em `/admin` com navegação por abas
 - Listagem de todos os bilhetes comprados
-- Exibição de estatísticas de vendas
+- Exibição de estatísticas de vendas com gráficos
 - Visualização dos vencedores
 - Configuração da chance de vitória
+- Dashboard com métricas em tempo real
 
 ## Tecnologias Utilizadas
 
@@ -23,7 +25,8 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - TypeScript
 - Tailwind CSS para estilização
 - Prisma ORM com PostgreSQL
-- Banco de dados PostgreSQL
+- Chart.js para gráficos
+- Banco de dados PostgreSQL (Supabase)
 
 ## Como Executar
 
@@ -50,6 +53,7 @@ npm run dev
 app/
   ├── page.tsx              # Página principal da rifa
   ├── layout.tsx            # Layout raiz com navegação
+  ├── middleware.ts         # Middleware de segurança
   ├── api/
   │   ├── comprar/route.ts  # Endpoint de compra e sorteio
   │   └── admin/
@@ -61,6 +65,12 @@ app/
 prisma/
   └── schema.prisma         # Definição do banco de dados
 ```
+
+## Segurança
+
+- Middleware para proteção de rotas administrativas
+- Rastreamento de IP e user agent dos usuários
+- Validação de dados de entrada
 
 ## Configuração
 
@@ -78,3 +88,26 @@ A chance de vitória pode ser configurada no arquivo `.env` através da variáve
 ## Personalização
 
 Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exibição do prêmio na página principal (`app/page.tsx`).
+
+## Melhorias Implementadas
+
+1. **Interface e Experiência do Usuário**:
+   - Adicionado contador regressivo para o próximo sorteio
+   - Melhorias visuais com animações e gradientes
+   - Layout responsivo otimizado
+
+2. **Funcionalidades do Sistema**:
+   - Rastreamento de IP e user agent dos usuários
+   - Validação de dados aprimorada
+   - Tratamento de erros melhorado
+
+3. **Painel Administrativo**:
+   - Navegação por abas
+   - Gráficos de estatísticas (Chart.js)
+   - Dashboard com métricas em tempo real
+   - Configurações avançadas
+
+4. **Performance e Segurança**:
+   - Middleware de segurança para rotas administrativas
+   - Validação de entrada aprimorada
+   - Estrutura de código mais organizada

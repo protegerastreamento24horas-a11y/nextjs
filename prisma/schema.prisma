@@ -17,6 +17,8 @@ model Ticket {
   userEmail   String?
   purchaseDate DateTime @default(now())
   isWinner    Boolean  @default(false)
+  ip          String?  // IP do comprador para rastreamento
+  userAgent   String?  // User agent para rastreamento
   winner      Winner?
 }
 
