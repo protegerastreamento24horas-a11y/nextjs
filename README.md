@@ -9,6 +9,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Contador regressivo para o próximo sorteio
 - Compra de bilhetes com sorteio automático
 - Exibição de resultados imediatos ("Parabéns, você ganhou!" ou "Não foi dessa vez")
+- Envio automático de e-mails para vencedores
 - Visualização dos últimos vencedores
 
 ### Para Administradores:
@@ -19,6 +20,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Visualização dos vencedores
 - Configuração da chance de vitória
 - Dashboard com métricas em tempo real
+- Notificações por e-mail
 
 ## Tecnologias Utilizadas
 
@@ -28,6 +30,7 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Prisma ORM com PostgreSQL
 - Chart.js para gráficos
 - JWT para autenticação
+- Nodemailer para envio de e-mails
 - Banco de dados PostgreSQL (Supabase)
 
 ## Como Executar
@@ -46,6 +49,7 @@ npx prisma generate
 ```env
 ADMIN_USERNAME=seu_usuario
 ADMIN_PASSWORD=sua_senha
+ADMIN_EMAIL=seu@email.com
 JWT_SECRET=sua_chave_secreta_segura
 ```
 
@@ -65,6 +69,8 @@ app/
   ├── page.tsx                 # Página principal da rifa
   ├── layout.tsx               # Layout raiz com navegação
   ├── middleware.ts            # Middleware de segurança
+  ├── lib/
+  │   └── emailService.ts      # Serviço de envio de e-mails
   ├── api/
   │   ├── comprar/route.ts     # Endpoint de compra e sorteio
   │   └── admin/
@@ -86,6 +92,21 @@ prisma/
 - Rastreamento de IP e user agent dos usuários
 - Validação de dados de entrada
 
+## Sistema de E-mails
+
+O sistema envia automaticamente e-mails para:
+- Vencedores da rifa (quando fornecem e-mail)
+- Administradores (para notificações importantes)
+
+Para configurar o envio de e-mails em produção, defina as seguintes variáveis de ambiente:
+```env
+SMTP_HOST=smtp.seuprovedor.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu@email.com
+SMTP_PASS=sua_senha
+```
+
 ## Configuração
 
 A chance de vitória pode ser configurada no arquivo `.env` através da variável `WINNING_CHANCE`. O valor padrão é 100, o que significa uma chance de 1 em 100 (1%).
@@ -99,7 +120,13 @@ A chance de vitória pode ser configurada no arquivo `.env` através da variáve
    - `WINNING_CHANCE`: Chance de vitória (padrão: 100)
    - `ADMIN_USERNAME`: Nome de usuário administrador
    - `ADMIN_PASSWORD`: Senha do administrador
+   - `ADMIN_EMAIL`: E-mail do administrador
    - `JWT_SECRET`: Chave secreta para JWT
+   - `SMTP_HOST`: Servidor SMTP (opcional)
+   - `SMTP_PORT`: Porta SMTP (opcional)
+   - `SMTP_SECURE`: Usar conexão segura (opcional)
+   - `SMTP_USER`: Usuário SMTP (opcional)
+   - `SMTP_PASS`: Senha SMTP (opcional)
 4. Faça o deploy clicando em "Deploy"
 
 ## Personalização
@@ -117,6 +144,7 @@ Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exib
    - Rastreamento de IP e user agent dos usuários
    - Validação de dados aprimorada
    - Tratamento de erros melhorado
+   - Sistema de envio de e-mails automático
 
 3. **Painel Administrativo**:
    - Navegação por abas

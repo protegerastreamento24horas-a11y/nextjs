@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { sendWinnerEmail } from '@/app/lib/emailService';
 
 const prisma = new PrismaClient();
 
@@ -53,6 +54,15 @@ export async function POST(request: Request) {
         where: { id: ticket.id },
         data: { isWinner: true },
       });
+
+      // Enviar e-mail para o vencedor (se tiver e-mail)
+      if (userEmail) {
+        await sendWinnerEmail({
+          userName,
+          userEmail,
+          prizeName: "Prêmio Especial da Rifa"
+        });
+      }
 
       return NextResponse.json({
         isWinner: true,
