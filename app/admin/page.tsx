@@ -89,7 +89,20 @@ export default function AdminPanel() {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      // Verificar token no localStorage primeiro
+      let token = localStorage.getItem('admin_token');
+      
+      // Se não encontrar no localStorage, verificar nos cookies
+      if (!token) {
+        // Esta é uma solução alternativa para acessar cookies no cliente
+        // Em produção, seria melhor usar uma abordagem server-side
+        const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+        const tokenCookie = cookies.find(cookie => cookie.startsWith('admin_token='));
+        if (tokenCookie) {
+          token = tokenCookie.split('=')[1];
+        }
+      }
+      
       if (!token) {
         router.push('/admin/login');
         return;
@@ -222,6 +235,7 @@ export default function AdminPanel() {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
+    document.cookie = "admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     router.push('/admin/login');
   };
 

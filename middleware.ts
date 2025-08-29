@@ -44,7 +44,10 @@ export async function middleware(request: NextRequest) {
       
       // Se for uma requisição para a API, continuar
       if (pathname.startsWith('/api/admin')) {
-        return NextResponse.next();
+        // Adicionar o token ao header para as APIs
+        const response = NextResponse.next();
+        response.headers.set('authorization', `Bearer ${authToken}`);
+        return response;
       }
       
       // Se for acesso ao painel web, continuar

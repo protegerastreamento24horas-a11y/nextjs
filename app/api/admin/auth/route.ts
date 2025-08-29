@@ -33,14 +33,25 @@ export async function POST(request: Request) {
         .setExpirationTime('24h')
         .sign(secret);
 
-      // Retornar token e informações do usuário
-      return NextResponse.json({
+      // Criar resposta com token
+      const response = NextResponse.json({
         token: jwt,
         user: {
           username,
           role: 'admin'
         }
       });
+      
+      // Definir cookie com token
+      response.cookies.set('admin_token', jwt, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24, // 24 horas
+        path: '/',
+      });
+
+      // Retornar resposta com cookie
+      return response;
     } else {
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
@@ -60,7 +71,25 @@ export async function GET(request: Request) {
   try {
     // Verificar token
     const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7); // Remove "Bearer "
+    }
+    
+    // Se não encontrou no header, verificar nos cookies
+    if (!token) {
+      const cookieHeader = request.headers.get('cookie');
+      if (cookieHeader) {
+        const cookies = cookieHeader.split(';').map(cookie => cookie.trim());
+        const tokenCookie = cookies.find(cookie => cookie.startsWith('admin_token='));
+        if (tokenCookie) {
+          token = tokenCookie.split('=')[1];
+        }
+      }
+    }
+    
+    if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
         { status: 401 }
