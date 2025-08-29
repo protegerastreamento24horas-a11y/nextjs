@@ -25,12 +25,26 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { ticketPrice, maxNumber, winningNumbers } = body;
+    const { 
+      ticketPrice, 
+      prizeValue, 
+      maxNumber, 
+      winningNumbers, 
+      autoDrawnNumbers, 
+      winningProbability 
+    } = body;
 
     // Validar dados
-    if (ticketPrice === undefined || maxNumber === undefined || !winningNumbers) {
+    if (
+      ticketPrice === undefined || 
+      prizeValue === undefined || 
+      maxNumber === undefined || 
+      !winningNumbers || 
+      autoDrawnNumbers === undefined || 
+      winningProbability === undefined
+    ) {
       return NextResponse.json(
-        { error: 'Preço do bilhete, número máximo e números premiados são obrigatórios' },
+        { error: 'Todos os campos são obrigatórios' },
         { status: 400 }
       );
     }
@@ -46,6 +60,24 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Validar probabilidade (0-100)
+    const probability = parseInt(winningProbability);
+    if (probability < 0 || probability > 100) {
+      return NextResponse.json(
+        { error: 'A probabilidade deve estar entre 0 e 100' },
+        { status: 400 }
+      );
+    }
+
+    // Validar quantidade de números sorteados automaticamente
+    const autoNumbers = parseInt(autoDrawnNumbers);
+    if (autoNumbers < 1) {
+      return NextResponse.json(
+        { error: 'A quantidade de números sorteados deve ser pelo menos 1' },
+        { status: 400 }
+      );
+    }
+
     // Verificar se já existe uma configuração ativa
     let raffleConfig = await prisma.raffleConfig.findFirst({
       where: { isActive: true }
@@ -57,8 +89,11 @@ export async function PUT(request: Request) {
         where: { id: raffleConfig.id },
         data: {
           ticketPrice: parseFloat(ticketPrice),
+          prizeValue: parseFloat(prizeValue),
           maxNumber: parseInt(maxNumber),
-          winningNumbers: validNumbers.join(',')
+          winningNumbers: validNumbers.join(','),
+          autoDrawnNumbers: autoNumbers,
+          winningProbability: probability
         }
       });
     } else {
@@ -66,8 +101,11 @@ export async function PUT(request: Request) {
       raffleConfig = await prisma.raffleConfig.create({
         data: {
           ticketPrice: parseFloat(ticketPrice),
+          prizeValue: parseFloat(prizeValue),
           maxNumber: parseInt(maxNumber),
           winningNumbers: validNumbers.join(','),
+          autoDrawnNumbers: autoNumbers,
+          winningProbability: probability,
           isActive: true
         }
       });

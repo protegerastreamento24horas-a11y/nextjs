@@ -31,8 +31,11 @@ export async function POST(request: Request) {
       raffleConfig = await prisma.raffleConfig.create({
         data: {
           ticketPrice: 1000, // R$ 1.000,00
+          prizeValue: 10000, // R$ 10.000,00
           maxNumber: 10000,  // Sorteio entre 1 e 10.000
-          winningNumbers: "100,88,14" // Números premiados padrão
+          winningNumbers: "100,88,14", // Números premiados padrão
+          autoDrawnNumbers: 1, // 1 número sorteado automaticamente
+          winningProbability: 100 // 100% de probabilidade
         }
       });
     }
@@ -47,22 +50,41 @@ export async function POST(request: Request) {
       },
     });
 
-    // Realizar sorteio automático
-    const drawnNumber = Math.floor(Math.random() * raffleConfig.maxNumber) + 1;
+    // Verificar probabilidade de ganhar
+    const probabilityCheck = Math.floor(Math.random() * 100) + 1; // 1-100
+    const isWinnerByProbability = probabilityCheck <= raffleConfig.winningProbability;
+
+    // Se a probabilidade for 0, nunca ganha
+    if (raffleConfig.winningProbability === 0) {
+      // Não há chance de ganhar
+      return NextResponse.json({
+        isWinner: false,
+        drawnNumbers: [],
+        message: `Seu bilhete foi registrado, mas infelizmente não foi dessa vez. Tente novamente!`,
+      });
+    }
+
+    // Sortear números automaticamente
+    const drawnNumbers = [];
+    for (let i = 0; i < raffleConfig.autoDrawnNumbers; i++) {
+      const drawnNumber = Math.floor(Math.random() * raffleConfig.maxNumber) + 1;
+      drawnNumbers.push(drawnNumber);
+    }
     
-    // Atualizar bilhete com o número sorteado
+    // Atualizar bilhete com os números sorteados
     await prisma.ticket.update({
       where: { id: ticket.id },
-      data: { drawnNumber }
+      data: { drawnNumbers: drawnNumbers.join(',') }
     });
 
-    // Verificar se o número sorteado é premiado
+    // Verificar se algum número sorteado é premiado (somente se passar na probabilidade)
     const winningNumbers = raffleConfig.winningNumbers
       .split(',')
       .map(num => parseInt(num.trim()))
       .filter(num => !isNaN(num));
     
-    const isWinner = winningNumbers.includes(drawnNumber);
+    const hasWinningNumber = drawnNumbers.some(num => winningNumbers.includes(num));
+    const isWinner = isWinnerByProbability && hasWinningNumber;
 
     // Se for vencedor, registrar na tabela de vencedores
     if (isWinner) {
@@ -92,7 +114,7 @@ export async function POST(request: Request) {
             ticketId: ticket.id,
             userName: ticket.userName,
             userEmail: ticket.userEmail,
-            drawnNumber: drawnNumber,
+            drawnNumbers: drawnNumbers.join(','),
             prizeId: prize.id
           },
         });
@@ -108,7 +130,7 @@ export async function POST(request: Request) {
             ticketId: ticket.id,
             userName: ticket.userName,
             userEmail: ticket.userEmail,
-            drawnNumber: drawnNumber
+            drawnNumbers: drawnNumbers.join(',')
           },
         });
       }
@@ -126,8 +148,8 @@ export async function POST(request: Request) {
       const prizeName = prize ? prize.name : "um prêmio especial";
       return NextResponse.json({
         isWinner: true,
-        drawnNumber,
-        message: `Parabéns, você ganhou ${prizeName}! Seu número sorteado foi ${drawnNumber}. Entre em contato conosco para receber seu prêmio.`,
+        drawnNumbers,
+        message: `Parabéns, você ganhou ${prizeName}! Seus números sorteados foram ${drawnNumbers.join(', ')}. Entre em contato conosco para receber seu prêmio.`,
         prize: prize ? {
           id: prize.id,
           name: prize.name,
@@ -138,8 +160,8 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({
         isWinner: false,
-        drawnNumber,
-        message: `Seu número sorteado foi ${drawnNumber}. Não foi dessa vez. Tente novamente!`,
+        drawnNumbers,
+        message: `Seus números sorteados foram ${drawnNumbers.join(', ')}. Não foi dessa vez. Tente novamente!`,
       });
     }
   } catch (error) {
@@ -171,7 +193,7 @@ export async function GET() {
       prizeDate: winner.prizeDate,
       prizeName: winner.prize?.name || "Prêmio Especial",
       ticketId: winner.ticketId,
-      drawnNumber: winner.drawnNumber
+      drawnNumbers: winner.drawnNumbers
     }));
 
     return NextResponse.json(formattedWinners);

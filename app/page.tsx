@@ -7,13 +7,14 @@ type Winner = {
   userName: string;
   prizeDate: string;
   prizeName: string;
-  drawnNumber: number;
+  drawnNumbers: string;
 };
 
 export default function Home() {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [result, setResult] = useState<{ isWinner: boolean; message: string; drawnNumber?: number; prize?: any } | null>(null);
+  const [result, setResult] = useState<{ isWinner: boolean; message: string; drawnNumbers?: number[]; prize?: any } | null>(null);
+  const [prizeValue, setPrizeValue] = useState(10000); // Valor padrão R$ 10.000,00
   const [isLoading, setIsLoading] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -35,8 +36,9 @@ export default function Home() {
   const fetchRaffleInfo = async () => {
     try {
       // Em uma implementação real, buscaríamos as informações da API
-      // Por enquanto, vamos manter o valor padrão
+      // Por enquanto, vamos manter os valores padrão
       setTicketPrice(1000);
+      setPrizeValue(10000);
     } catch (error) {
       console.error("Erro ao buscar informações da rifa:", error);
     }
@@ -235,8 +237,8 @@ export default function Home() {
                   {result.isWinner ? "🎉 Parabéns! 🎉" : "😢 Não foi dessa vez 😢"}
                 </p>
                 <p>{result.message}</p>
-                {result.drawnNumber !== undefined && (
-                  <p className="mt-2 font-bold">Seu número sorteado: {result.drawnNumber}</p>
+                {result.drawnNumbers && result.drawnNumbers.length > 0 && (
+                  <p className="mt-2 font-bold">Seus números sorteados: {result.drawnNumbers.join(', ')}</p>
                 )}
                 {result.isWinner && result.prize && (
                   <div className="mt-4 p-3 bg-white/10 rounded-lg">
@@ -261,7 +263,7 @@ export default function Home() {
                     Ganhou: {winner.prizeName}
                   </p>
                   <p className="text-sm font-bold text-yellow-300">
-                    Número: {winner.drawnNumber}
+                    Números: {winner.drawnNumbers}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     Sorteado em {new Date(winner.prizeDate).toLocaleDateString("pt-BR")}

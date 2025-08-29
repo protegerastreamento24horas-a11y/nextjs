@@ -30,7 +30,7 @@ type Ticket = {
   userEmail: string | null;
   purchaseDate: string;
   isWinner: boolean;
-  drawnNumber: number | null;
+  drawnNumbers: string | null;
 };
 
 type Winner = {
@@ -38,7 +38,7 @@ type Winner = {
   userName: string;
   userEmail: string | null;
   prizeDate: string;
-  drawnNumber: number;
+  drawnNumbers: string;
 };
 
 type Stats = {
@@ -50,8 +50,11 @@ type Stats = {
 type RaffleConfig = {
   id: string;
   ticketPrice: number;
+  prizeValue: number;
   maxNumber: number;
   winningNumbers: string;
+  autoDrawnNumbers: number;
+  winningProbability: number;
   isActive: boolean;
 };
 
@@ -71,8 +74,11 @@ export default function AdminPanel() {
 
   // Form states for raffle config
   const [ticketPrice, setTicketPrice] = useState("1000");
+  const [prizeValue, setPrizeValue] = useState("10000");
   const [maxNumber, setMaxNumber] = useState("10000");
   const [winningNumbers, setWinningNumbers] = useState("100,88,14");
+  const [autoDrawnNumbers, setAutoDrawnNumbers] = useState("1");
+  const [winningProbability, setWinningProbability] = useState("100");
   const [configError, setConfigError] = useState("");
 
   useEffect(() => {
@@ -144,8 +150,11 @@ export default function AdminPanel() {
         const config: RaffleConfig = await response.json();
         setRaffleConfig(config);
         setTicketPrice(config.ticketPrice.toString());
+        setPrizeValue(config.prizeValue.toString());
         setMaxNumber(config.maxNumber.toString());
         setWinningNumbers(config.winningNumbers);
+        setAutoDrawnNumbers(config.autoDrawnNumbers.toString());
+        setWinningProbability(config.winningProbability.toString());
       }
     } catch (error) {
       console.error("Erro ao buscar configuração da rifa:", error);
@@ -189,8 +198,11 @@ export default function AdminPanel() {
         },
         body: JSON.stringify({
           ticketPrice: parseFloat(ticketPrice),
+          prizeValue: parseFloat(prizeValue),
           maxNumber: parseInt(maxNumber),
-          winningNumbers
+          winningNumbers,
+          autoDrawnNumbers: parseInt(autoDrawnNumbers),
+          winningProbability: parseInt(winningProbability)
         }),
       });
       
@@ -386,7 +398,7 @@ export default function AdminPanel() {
                       <th className="py-3 px-4 text-left">Nome</th>
                       <th className="py-3 px-4 text-left">E-mail</th>
                       <th className="py-3 px-4 text-left">Data</th>
-                      <th className="py-3 px-4 text-left">Número Sorteado</th>
+                      <th className="py-3 px-4 text-left">Números Sorteados</th>
                       <th className="py-3 px-4 text-left">Resultado</th>
                     </tr>
                   </thead>
@@ -400,7 +412,7 @@ export default function AdminPanel() {
                           {new Date(ticket.purchaseDate).toLocaleDateString("pt-BR")}
                         </td>
                         <td className="py-3 px-4">
-                          {ticket.drawnNumber !== null ? ticket.drawnNumber : "-"}
+                          {ticket.drawnNumbers || "-"}
                         </td>
                         <td className="py-3 px-4">
                           {ticket.isWinner ? (
@@ -446,7 +458,7 @@ export default function AdminPanel() {
                       <th className="py-3 px-4 text-left">ID</th>
                       <th className="py-3 px-4 text-left">Nome</th>
                       <th className="py-3 px-4 text-left">E-mail</th>
-                      <th className="py-3 px-4 text-left">Número Sorteado</th>
+                      <th className="py-3 px-4 text-left">Números Sorteados</th>
                       <th className="py-3 px-4 text-left">Data do Prêmio</th>
                     </tr>
                   </thead>
@@ -456,7 +468,7 @@ export default function AdminPanel() {
                         <td className="py-3 px-4 text-sm text-gray-400">{winner.id.substring(0, 8)}...</td>
                         <td className="py-3 px-4">{winner.userName}</td>
                         <td className="py-3 px-4">{winner.userEmail || "-"}</td>
-                        <td className="py-3 px-4 font-bold text-yellow-400">{winner.drawnNumber}</td>
+                        <td className="py-3 px-4 font-bold text-yellow-400">{winner.drawnNumbers}</td>
                         <td className="py-3 px-4">
                           {new Date(winner.prizeDate).toLocaleDateString("pt-BR")}
                         </td>
@@ -498,7 +510,7 @@ export default function AdminPanel() {
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
                 <h3 className="text-xl font-semibold mb-4">Parâmetros da Rifa</h3>
                 <div className="bg-gray-750 p-4 rounded-lg space-y-4">
@@ -511,6 +523,21 @@ export default function AdminPanel() {
                       id="ticketPrice"
                       value={ticketPrice}
                       onChange={(e) => setTicketPrice(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="prizeValue" className="block mb-2">
+                      Valor do Prêmio (R$)
+                    </label>
+                    <input
+                      type="number"
+                      id="prizeValue"
+                      value={prizeValue}
+                      onChange={(e) => setPrizeValue(e.target.value)}
                       min="0"
                       step="0.01"
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
@@ -548,6 +575,40 @@ export default function AdminPanel() {
                     </p>
                   </div>
                   
+                  <div>
+                    <label htmlFor="autoDrawnNumbers" className="block mb-2">
+                      Quantidade de Números Sorteados Automaticamente
+                    </label>
+                    <input
+                      type="number"
+                      id="autoDrawnNumbers"
+                      value={autoDrawnNumbers}
+                      onChange={(e) => setAutoDrawnNumbers(e.target.value)}
+                      min="1"
+                      max={maxNumber || 10000}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="winningProbability" className="block mb-2">
+                      Probabilidade de Ganhar (0-100%)
+                    </label>
+                    <input
+                      type="number"
+                      id="winningProbability"
+                      value={winningProbability}
+                      onChange={(e) => setWinningProbability(e.target.value)}
+                      min="0"
+                      max="100"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">
+                      0% = Nenhum número premiado será sorteado<br />
+                      100% = Probabilidade normal de acordo com os números
+                    </p>
+                  </div>
+                  
                   <button
                     onClick={updateRaffleConfig}
                     className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 mt-4"
@@ -565,9 +626,11 @@ export default function AdminPanel() {
                     {raffleConfig ? (
                       <ul className="text-sm text-gray-300 space-y-2">
                         <li><span className="font-medium">Preço do Bilhete:</span> R$ {raffleConfig.ticketPrice.toFixed(2)}</li>
+                        <li><span className="font-medium">Valor do Prêmio:</span> R$ {raffleConfig.prizeValue.toFixed(2)}</li>
                         <li><span className="font-medium">Número Máximo:</span> {raffleConfig.maxNumber}</li>
                         <li><span className="font-medium">Números Premiados:</span> {raffleConfig.winningNumbers}</li>
-                        <li><span className="font-medium">Números Premiados (quantidade):</span> {raffleConfig.winningNumbers.split(',').length}</li>
+                        <li><span className="font-medium">Números Sorteados:</span> {raffleConfig.autoDrawnNumbers}</li>
+                        <li><span className="font-medium">Probabilidade:</span> {raffleConfig.winningProbability}%</li>
                       </ul>
                     ) : (
                       <p className="text-gray-400">Carregando configuração...</p>
@@ -578,9 +641,10 @@ export default function AdminPanel() {
                     <h4 className="font-bold mb-2">Como Funciona</h4>
                     <ul className="text-sm text-gray-300 space-y-1">
                       <li>• Usuários pagam R$ {raffleConfig?.ticketPrice.toFixed(2) || '1000.00'} por bilhete</li>
-                      <li>• Sistema sorteia um número entre 1 e {raffleConfig?.maxNumber || '10000'}</li>
-                      <li>• Se o número sorteado estiver entre os premiados, usuário ganha</li>
-                      <li>• Cada bilhete tem chance igual de ganhar</li>
+                      <li>• Sistema sorteia {raffleConfig?.autoDrawnNumbers || '1'} número(s) entre 1 e {raffleConfig?.maxNumber || '10000'}</li>
+                      <li>• Se o número sorteado estiver entre os premiados E passar na probabilidade, usuário ganha</li>
+                      <li>• Probabilidade de ganhar: {raffleConfig?.winningProbability || '100'}%</li>
+                      <li>• Valor do prêmio: R$ {raffleConfig?.prizeValue.toFixed(2) || '10000.00'}</li>
                     </ul>
                   </div>
                 </div>
@@ -629,7 +693,8 @@ export default function AdminPanel() {
                   </p>
                   <p className="text-sm text-gray-300 mt-2">
                     O sistema é completamente transparente e os resultados são registrados 
-                    em tempo real no banco de dados.
+                    em tempo real no banco de dados. A probabilidade de ganhar pode ser
+                    ajustada entre 0% e 100%.
                   </p>
                 </div>
               </div>
