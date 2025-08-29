@@ -22,7 +22,7 @@ const createTransporter = () => {
   
   // Verificar se estamos em produção
   if (process.env.NODE_ENV === 'production') {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
