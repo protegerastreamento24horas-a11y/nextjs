@@ -22,8 +22,8 @@ Este é um sistema completo de rifas automáticas desenvolvido com Next.js, que 
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS para estilização
-- Prisma ORM com SQLite
-- Banco de dados SQLite
+- Prisma ORM com PostgreSQL
+- Banco de dados PostgreSQL
 
 ## Como Executar
 
@@ -35,7 +35,6 @@ npm install
 2. Configure o banco de dados:
 ```bash
 npx prisma generate
-npx prisma db push
 ```
 
 3. Inicie o servidor de desenvolvimento:
@@ -66,6 +65,15 @@ prisma/
 ## Configuração
 
 A chance de vitória pode ser configurada no arquivo `.env` através da variável `WINNING_CHANCE`. O valor padrão é 100, o que significa uma chance de 1 em 100 (1%).
+
+## Deploy na Vercel
+
+1. Crie uma conta na [Vercel](https://vercel.com/) se ainda não tiver
+2. Crie um novo projeto e conecte-o ao seu repositório GitHub
+3. Configure as variáveis de ambiente necessárias:
+   - `DATABASE_URL`: URL do seu banco de dados PostgreSQL
+   - `WINNING_CHANCE`: Chance de vitória (padrão: 100)
+4. Faça o deploy clicando em "Deploy"
 
 ## Personalização
 

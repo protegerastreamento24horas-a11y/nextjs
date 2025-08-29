@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "env": {
+    "WINNING_CHANCE": "100"
+  },
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "regions": ["gru1"]
+}
