@@ -4,10 +4,6 @@ import { sendWinnerEmail } from '@/app/lib/emailService';
 
 const prisma = new PrismaClient();
 
-// Chance de vitória: 1 em 100 (1%)
-// Esta chance pode ser configurada via variável de ambiente
-let WINNING_CHANCE = parseInt(process.env.WINNING_CHANCE || '100');
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -25,6 +21,22 @@ export async function POST(request: Request) {
       );
     }
 
+    // Obter configuração da rifa
+    let raffleConfig = await prisma.raffleConfig.findFirst({
+      where: { isActive: true }
+    });
+
+    // Se não houver configuração, criar uma padrão
+    if (!raffleConfig) {
+      raffleConfig = await prisma.raffleConfig.create({
+        data: {
+          ticketPrice: 1000, // R$ 1.000,00
+          maxNumber: 10000,  // Sorteio entre 1 e 10.000
+          winningNumbers: "100,88,14" // Números premiados padrão
+        }
+      });
+    }
+
     // Criar o bilhete
     const ticket = await prisma.ticket.create({
       data: {
@@ -36,8 +48,21 @@ export async function POST(request: Request) {
     });
 
     // Realizar sorteio automático
-    const randomNumber = Math.floor(Math.random() * WINNING_CHANCE) + 1;
-    const isWinner = randomNumber === 1;
+    const drawnNumber = Math.floor(Math.random() * raffleConfig.maxNumber) + 1;
+    
+    // Atualizar bilhete com o número sorteado
+    await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { drawnNumber }
+    });
+
+    // Verificar se o número sorteado é premiado
+    const winningNumbers = raffleConfig.winningNumbers
+      .split(',')
+      .map(num => parseInt(num.trim()))
+      .filter(num => !isNaN(num));
+    
+    const isWinner = winningNumbers.includes(drawnNumber);
 
     // Se for vencedor, registrar na tabela de vencedores
     if (isWinner) {
@@ -67,6 +92,7 @@ export async function POST(request: Request) {
             ticketId: ticket.id,
             userName: ticket.userName,
             userEmail: ticket.userEmail,
+            drawnNumber: drawnNumber,
             prizeId: prize.id
           },
         });
@@ -82,6 +108,7 @@ export async function POST(request: Request) {
             ticketId: ticket.id,
             userName: ticket.userName,
             userEmail: ticket.userEmail,
+            drawnNumber: drawnNumber
           },
         });
       }
@@ -99,7 +126,8 @@ export async function POST(request: Request) {
       const prizeName = prize ? prize.name : "um prêmio especial";
       return NextResponse.json({
         isWinner: true,
-        message: `Parabéns, você ganhou ${prizeName}! Entre em contato conosco para receber seu prêmio.`,
+        drawnNumber,
+        message: `Parabéns, você ganhou ${prizeName}! Seu número sorteado foi ${drawnNumber}. Entre em contato conosco para receber seu prêmio.`,
         prize: prize ? {
           id: prize.id,
           name: prize.name,
@@ -110,7 +138,8 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({
         isWinner: false,
-        message: "Não foi dessa vez. Tente novamente!",
+        drawnNumber,
+        message: `Seu número sorteado foi ${drawnNumber}. Não foi dessa vez. Tente novamente!`,
       });
     }
   } catch (error) {
@@ -141,7 +170,8 @@ export async function GET() {
       userName: winner.userName,
       prizeDate: winner.prizeDate,
       prizeName: winner.prize?.name || "Prêmio Especial",
-      ticketId: winner.ticketId
+      ticketId: winner.ticketId,
+      drawnNumber: winner.drawnNumber
     }));
 
     return NextResponse.json(formattedWinners);

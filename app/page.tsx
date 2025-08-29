@@ -7,19 +7,22 @@ type Winner = {
   userName: string;
   prizeDate: string;
   prizeName: string;
+  drawnNumber: number;
 };
 
 export default function Home() {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [result, setResult] = useState<{ isWinner: boolean; message: string; prize?: any } | null>(null);
+  const [result, setResult] = useState<{ isWinner: boolean; message: string; drawnNumber?: number; prize?: any } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [ticketPrice, setTicketPrice] = useState(1000); // Preço padrão R$ 1.000,00
 
   useEffect(() => {
     fetchWinners();
     startCountdown();
+    fetchRaffleInfo();
     
     // Atualizar o countdown a cada segundo
     const timer = setInterval(() => {
@@ -28,6 +31,16 @@ export default function Home() {
     
     return () => clearInterval(timer);
   }, []);
+
+  const fetchRaffleInfo = async () => {
+    try {
+      // Em uma implementação real, buscaríamos as informações da API
+      // Por enquanto, vamos manter o valor padrão
+      setTicketPrice(1000);
+    } catch (error) {
+      console.error("Erro ao buscar informações da rifa:", error);
+    }
+  };
 
   const startCountdown = () => {
     // Data fixa para o próximo sorteio (exemplo: 7 dias a partir de hoje)
@@ -139,27 +152,29 @@ export default function Home() {
                 <span className="text-4xl font-bold">PRÊMIOS ESPECIAIS</span>
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-4">Prêmios Disponíveis</h2>
+            <h2 className="text-2xl font-bold mb-4">Como Funciona</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Prêmios Comuns</h3>
+                <h3 className="font-bold text-yellow-400 mb-2">Mecânica da Rifa</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• Vales-compra</li>
-                  <li>• Produtos eletrônicos</li>
-                  <li>• Itens de valor médio</li>
+                  <li>• Cada bilhete custa R$ {ticketPrice.toFixed(2)}</li>
+                  <li>• Pagamento feito via PIX</li>
+                  <li>• Sistema sorteia um número entre 1 e 10.000</li>
+                  <li>• Números premiados: 100, 88 e 14</li>
                 </ul>
               </div>
               <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Prêmios Raros</h3>
+                <h3 className="font-bold text-yellow-400 mb-2">Premiação</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• Smartphones premium</li>
+                  <li>• Prêmios variados por raridade</li>
+                  <li>• Smartphone premium</li>
                   <li>• Viagens nacionais</li>
                   <li>• Itens de alto valor</li>
                 </ul>
               </div>
             </div>
             <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 p-4 rounded-lg">
-              <p className="text-center font-bold text-lg">Valor do bilhete: R$ 5,00</p>
+              <p className="text-center font-bold text-lg">Valor do bilhete: R$ {ticketPrice.toFixed(2)}</p>
             </div>
           </div>
 
@@ -197,10 +212,11 @@ export default function Home() {
               <div className="bg-gray-700/50 p-3 rounded-lg text-sm">
                 <p className="font-medium mb-1">Termos da Rifa:</p>
                 <ul className="list-disc pl-5 space-y-1 text-gray-300">
-                  <li>Cada bilhete custa R$ 5,00</li>
+                  <li>Cada bilhete custa R$ {ticketPrice.toFixed(2)}</li>
+                  <li>Pagamento via PIX</li>
                   <li>Sorteio ocorre a cada 7 dias</li>
                   <li>100% seguro e transparente</li>
-                  <li>Prêmios variados por raridade</li>
+                  <li>Números premiados: 100, 88 e 14</li>
                 </ul>
               </div>
               <button
@@ -208,7 +224,7 @@ export default function Home() {
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Processando..." : "Comprar Bilhete"}
+                {isLoading ? "Processando..." : "Comprar Bilhete por R$ " + ticketPrice.toFixed(2)}
               </button>
             </form>
 
@@ -219,6 +235,9 @@ export default function Home() {
                   {result.isWinner ? "🎉 Parabéns! 🎉" : "😢 Não foi dessa vez 😢"}
                 </p>
                 <p>{result.message}</p>
+                {result.drawnNumber !== undefined && (
+                  <p className="mt-2 font-bold">Seu número sorteado: {result.drawnNumber}</p>
+                )}
                 {result.isWinner && result.prize && (
                   <div className="mt-4 p-3 bg-white/10 rounded-lg">
                     <p className="font-bold">Prêmio: {result.prize.name}</p>
@@ -240,6 +259,9 @@ export default function Home() {
                   <p className="font-bold">{winner.userName}</p>
                   <p className="text-sm text-gray-300">
                     Ganhou: {winner.prizeName}
+                  </p>
+                  <p className="text-sm font-bold text-yellow-300">
+                    Número: {winner.drawnNumber}
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     Sorteado em {new Date(winner.prizeDate).toLocaleDateString("pt-BR")}

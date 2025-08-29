@@ -10,6 +10,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo para configuração da rifa
+model RaffleConfig {
+  id                   String   @id @default(uuid())
+  ticketPrice          Float    @default(1000) // Preço do bilhete em R$
+  maxNumber            Int      @default(10000) // Número máximo para sorteio
+  winningNumbers       String   // Números premiados separados por vírgula
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
 // Modelo para os prêmios
 model Prize {
   id          String   @id @default(uuid())
@@ -34,6 +45,8 @@ model Ticket {
   isWinner    Boolean  @default(false)
   ip          String?
   userAgent   String?
+  selectedNumber Int?   // Número selecionado pelo usuário (opcional)
+  drawnNumber  Int?    // Número sorteado automaticamente
   prize       Prize?   @relation(fields: [prizeId], references: [id])
   prizeId     String?
   winner      Winner?
@@ -46,6 +59,7 @@ model Winner {
   userName    String
   userEmail   String?
   prizeDate   DateTime @default(now())
+  drawnNumber Int      // Número que foi sorteado
   prize       Prize?   @relation(fields: [prizeId], references: [id])
   prizeId     String?
   ticket      Ticket   @relation(fields: [ticketId], references: [id])

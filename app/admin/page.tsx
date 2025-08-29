@@ -30,6 +30,7 @@ type Ticket = {
   userEmail: string | null;
   purchaseDate: string;
   isWinner: boolean;
+  drawnNumber: number | null;
 };
 
 type Winner = {
@@ -37,12 +38,21 @@ type Winner = {
   userName: string;
   userEmail: string | null;
   prizeDate: string;
+  drawnNumber: number;
 };
 
 type Stats = {
   totalTickets: number;
   totalWinners: number;
   ticketsLast7Days: { date: string; count: number }[];
+};
+
+type RaffleConfig = {
+  id: string;
+  ticketPrice: number;
+  maxNumber: number;
+  winningNumbers: string;
+  isActive: boolean;
 };
 
 export default function AdminPanel() {
@@ -53,16 +63,22 @@ export default function AdminPanel() {
     totalWinners: 0,
     ticketsLast7Days: []
   });
-  const [winningChance, setWinningChance] = useState(100);
-  const [newWinningChance, setNewWinningChance] = useState(100);
+  const [raffleConfig, setRaffleConfig] = useState<RaffleConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<{username: string, role: string} | null>(null);
   const router = useRouter();
 
+  // Form states for raffle config
+  const [ticketPrice, setTicketPrice] = useState("1000");
+  const [maxNumber, setMaxNumber] = useState("10000");
+  const [winningNumbers, setWinningNumbers] = useState("100,88,14");
+  const [configError, setConfigError] = useState("");
+
   useEffect(() => {
     checkAuth();
     fetchData();
+    fetchRaffleConfig();
   }, []);
 
   const checkAuth = async () => {
@@ -121,6 +137,21 @@ export default function AdminPanel() {
     }
   };
 
+  const fetchRaffleConfig = async () => {
+    try {
+      const response = await fetch('/api/admin/raffle-config');
+      if (response.ok) {
+        const config: RaffleConfig = await response.json();
+        setRaffleConfig(config);
+        setTicketPrice(config.ticketPrice.toString());
+        setMaxNumber(config.maxNumber.toString());
+        setWinningNumbers(config.winningNumbers);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar configuração da rifa:", error);
+    }
+  };
+
   const getLast7DaysTickets = (tickets: Ticket[]) => {
     const last7Days = [];
     const today = new Date();
@@ -145,28 +176,35 @@ export default function AdminPanel() {
     return last7Days;
   };
 
-  const updateWinningChance = async () => {
+  const updateRaffleConfig = async () => {
     try {
+      setConfigError("");
+      
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('/api/admin/settings', {
+      const response = await fetch('/api/admin/raffle-config', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token || ''}`
         },
-        body: JSON.stringify({ winningChance: newWinningChance }),
+        body: JSON.stringify({
+          ticketPrice: parseFloat(ticketPrice),
+          maxNumber: parseInt(maxNumber),
+          winningNumbers
+        }),
       });
       
       if (response.ok) {
-        setWinningChance(newWinningChance);
-        alert(`Chance de vitória atualizada para 1 em ${newWinningChance}`);
+        const updatedConfig = await response.json();
+        setRaffleConfig(updatedConfig);
+        alert('Configuração da rifa atualizada com sucesso!');
       } else {
         const data = await response.json();
-        alert(data.error || 'Erro ao atualizar a chance de vitória');
+        setConfigError(data.error || 'Erro ao atualizar a configuração da rifa');
       }
     } catch (error) {
-      console.error("Erro ao atualizar chance de vitória:", error);
-      alert('Erro ao atualizar a chance de vitória');
+      console.error("Erro ao atualizar configuração da rifa:", error);
+      setConfigError('Erro ao atualizar a configuração da rifa');
     }
   };
 
@@ -266,6 +304,12 @@ export default function AdminPanel() {
             Prêmios
           </button>
           <button
+            className={`py-2 px-4 font-medium ${activeTab === 'raffle-config' ? 'border-b-2 border-purple-500 text-purple-400' : 'text-gray-400'}`}
+            onClick={() => setActiveTab('raffle-config')}
+          >
+            Configurar Rifa
+          </button>
+          <button
             className={`py-2 px-4 font-medium ${activeTab === 'settings' ? 'border-b-2 border-purple-500 text-purple-400' : 'text-gray-400'}`}
             onClick={() => setActiveTab('settings')}
           >
@@ -289,9 +333,11 @@ export default function AdminPanel() {
               </div>
               
               <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl p-6 shadow-lg transform hover:scale-105 transition duration-300">
-                <h3 className="text-lg font-semibold mb-2">Chance de Vitória</h3>
-                <p className="text-3xl font-bold">1 em {winningChance}</p>
-                <p className="text-purple-200 text-sm mt-1">Probabilidade atual</p>
+                <h3 className="text-lg font-semibold mb-2">Preço do Bilhete</h3>
+                <p className="text-3xl font-bold">
+                  {raffleConfig ? `R$ ${raffleConfig.ticketPrice.toFixed(2)}` : 'Carregando...'}
+                </p>
+                <p className="text-purple-200 text-sm mt-1">Por bilhete</p>
               </div>
             </div>
 
@@ -340,6 +386,7 @@ export default function AdminPanel() {
                       <th className="py-3 px-4 text-left">Nome</th>
                       <th className="py-3 px-4 text-left">E-mail</th>
                       <th className="py-3 px-4 text-left">Data</th>
+                      <th className="py-3 px-4 text-left">Número Sorteado</th>
                       <th className="py-3 px-4 text-left">Resultado</th>
                     </tr>
                   </thead>
@@ -351,6 +398,9 @@ export default function AdminPanel() {
                         <td className="py-3 px-4">{ticket.userEmail || "-"}</td>
                         <td className="py-3 px-4">
                           {new Date(ticket.purchaseDate).toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="py-3 px-4">
+                          {ticket.drawnNumber !== null ? ticket.drawnNumber : "-"}
                         </td>
                         <td className="py-3 px-4">
                           {ticket.isWinner ? (
@@ -396,6 +446,7 @@ export default function AdminPanel() {
                       <th className="py-3 px-4 text-left">ID</th>
                       <th className="py-3 px-4 text-left">Nome</th>
                       <th className="py-3 px-4 text-left">E-mail</th>
+                      <th className="py-3 px-4 text-left">Número Sorteado</th>
                       <th className="py-3 px-4 text-left">Data do Prêmio</th>
                     </tr>
                   </thead>
@@ -405,6 +456,7 @@ export default function AdminPanel() {
                         <td className="py-3 px-4 text-sm text-gray-400">{winner.id.substring(0, 8)}...</td>
                         <td className="py-3 px-4">{winner.userName}</td>
                         <td className="py-3 px-4">{winner.userEmail || "-"}</td>
+                        <td className="py-3 px-4 font-bold text-yellow-400">{winner.drawnNumber}</td>
                         <td className="py-3 px-4">
                           {new Date(winner.prizeDate).toLocaleDateString("pt-BR")}
                         </td>
@@ -436,48 +488,112 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {activeTab === 'raffle-config' && (
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+            <h2 className="text-2xl font-bold mb-6">Configuração da Rifa</h2>
+            
+            {configError && (
+              <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 mb-6 text-red-300">
+                {configError}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Parâmetros da Rifa</h3>
+                <div className="bg-gray-750 p-4 rounded-lg space-y-4">
+                  <div>
+                    <label htmlFor="ticketPrice" className="block mb-2">
+                      Preço do Bilhete (R$)
+                    </label>
+                    <input
+                      type="number"
+                      id="ticketPrice"
+                      value={ticketPrice}
+                      onChange={(e) => setTicketPrice(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="maxNumber" className="block mb-2">
+                      Número Máximo para Sorteio
+                    </label>
+                    <input
+                      type="number"
+                      id="maxNumber"
+                      value={maxNumber}
+                      onChange={(e) => setMaxNumber(e.target.value)}
+                      min="1"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="winningNumbers" className="block mb-2">
+                      Números Premiados (separados por vírgula)
+                    </label>
+                    <input
+                      type="text"
+                      id="winningNumbers"
+                      value={winningNumbers}
+                      onChange={(e) => setWinningNumbers(e.target.value)}
+                      placeholder="Ex: 100,88,14"
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">
+                      Exemplo: 100,88,14 - Os números devem estar entre 1 e {maxNumber || '10000'}
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={updateRaffleConfig}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 mt-4"
+                  >
+                    Atualizar Configuração
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Informações Atuais</h3>
+                <div className="space-y-4">
+                  <div className="bg-gray-750 p-4 rounded-lg">
+                    <h4 className="font-bold mb-2">Configuração Atual</h4>
+                    {raffleConfig ? (
+                      <ul className="text-sm text-gray-300 space-y-2">
+                        <li><span className="font-medium">Preço do Bilhete:</span> R$ {raffleConfig.ticketPrice.toFixed(2)}</li>
+                        <li><span className="font-medium">Número Máximo:</span> {raffleConfig.maxNumber}</li>
+                        <li><span className="font-medium">Números Premiados:</span> {raffleConfig.winningNumbers}</li>
+                        <li><span className="font-medium">Números Premiados (quantidade):</span> {raffleConfig.winningNumbers.split(',').length}</li>
+                      </ul>
+                    ) : (
+                      <p className="text-gray-400">Carregando configuração...</p>
+                    )}
+                  </div>
+                  
+                  <div className="bg-gray-750 p-4 rounded-lg">
+                    <h4 className="font-bold mb-2">Como Funciona</h4>
+                    <ul className="text-sm text-gray-300 space-y-1">
+                      <li>• Usuários pagam R$ {raffleConfig?.ticketPrice.toFixed(2) || '1000.00'} por bilhete</li>
+                      <li>• Sistema sorteia um número entre 1 e {raffleConfig?.maxNumber || '10000'}</li>
+                      <li>• Se o número sorteado estiver entre os premiados, usuário ganha</li>
+                      <li>• Cada bilhete tem chance igual de ganhar</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
             <h2 className="text-2xl font-bold mb-6">Configurações do Sistema</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Chance de Vitória</h3>
-                <div className="bg-gray-750 p-4 rounded-lg">
-                  <p className="mb-4 text-gray-300">
-                    Configure a probabilidade de um usuário ganhar ao comprar um bilhete.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                      <label htmlFor="winningChance" className="block mb-2">
-                        Chance de vitória (1 em X)
-                      </label>
-                      <input
-                        type="number"
-                        id="winningChance"
-                        value={newWinningChance}
-                        onChange={(e) => setNewWinningChance(parseInt(e.target.value) || 100)}
-                        min="1"
-                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <button
-                        onClick={updateWinningChance}
-                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
-                      >
-                        Atualizar
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-gray-700/50 rounded-lg">
-                    <p className="text-sm">
-                      <span className="font-bold">Chance atual:</span> 1 em {winningChance} ({(100/winningChance).toFixed(2)}%)
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
               <div>
                 <h3 className="text-xl font-semibold mb-4">Informações do Sistema</h3>
                 <div className="space-y-4">
@@ -500,6 +616,21 @@ export default function AdminPanel() {
                       <li>• Taxa de vitória: {stats.totalTickets > 0 ? ((stats.totalWinners/stats.totalTickets)*100).toFixed(2) : '0.00'}%</li>
                     </ul>
                   </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Sobre a Rifa</h3>
+                <div className="bg-gray-750 p-4 rounded-lg">
+                  <p className="text-sm text-gray-300">
+                    Esta rifa utiliza um sistema de sorteio automático onde cada bilhete 
+                    comprado participa de um sorteio com números entre 1 e {raffleConfig?.maxNumber || '10000'}. 
+                    Os números premiados são definidos previamente na configuração da rifa.
+                  </p>
+                  <p className="text-sm text-gray-300 mt-2">
+                    O sistema é completamente transparente e os resultados são registrados 
+                    em tempo real no banco de dados.
+                  </p>
                 </div>
               </div>
             </div>
