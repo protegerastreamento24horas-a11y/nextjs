@@ -81,7 +81,7 @@ Equipe Rifa Premiada`,
     
     // Em produção, realmente enviar o e-mail
     if (process.env.NODE_ENV === 'production') {
-      const info = await transporter.sendMail(mailOptions);
+      const info: any = await transporter.sendMail(mailOptions);
       console.log('E-mail enviado:', info.messageId);
       return { success: true, messageId: info.messageId };
     } else {
@@ -110,7 +110,7 @@ export const sendAdminNotification = async (subject: string, message: string) =>
     
     // Em produção, realmente enviar o e-mail
     if (process.env.NODE_ENV === 'production') {
-      const info = await transporter.sendMail(mailOptions);
+      const info: any = await transporter.sendMail(mailOptions);
       console.log('Notificação enviada:', info.messageId);
       return { success: true, messageId: info.messageId };
     } else {
