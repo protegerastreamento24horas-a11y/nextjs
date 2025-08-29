@@ -95,8 +95,6 @@ export async function GET(request: Request) {
         { status: 401 }
       );
     }
-
-    const token = authHeader.substring(7); // Remove "Bearer "
     
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || 'super-secret-jwt-key'
