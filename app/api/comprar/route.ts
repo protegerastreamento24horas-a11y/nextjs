@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for') || 'IP desconhecido';
     const userAgent = request.headers.get('user-agent') || 'User agent desconhecido';
 
-    // Validar dados obrigatórios
+    // Validar dados
     if (!userName) {
       return NextResponse.json(
         { error: 'Nome é obrigatório' },
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           maxNumber: 10000,  // Sorteio entre 1 e 10.000
           winningNumbers: "100,88,14", // Números premiados padrão
           autoDrawnNumbers: 1, // 1 número sorteado automaticamente
-          winningProbability: 10 // 10% de probabilidade
+          winningProbability: 100 // 100% de probabilidade
         }
       });
     }
@@ -82,13 +82,13 @@ export async function POST(request: Request) {
       message: "Pedido criado com sucesso. Efetue o pagamento via PIX para confirmar sua participação."
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao processar compra:", error);
     
-    // Remover bilhete temporário em caso de erro
-    if (error instanceof Error && 'ticketId' in error) {
+    // Se um bilhete foi criado mas houve erro posterior, remover o bilhete
+    if (error.ticketId) {
       await prisma.ticket.delete({
-        where: { id: error.ticketId as number }
+        where: { id: error.ticketId }
       });
     }
     
@@ -96,8 +96,6 @@ export async function POST(request: Request) {
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -185,8 +183,6 @@ export async function PUT(request: Request) {
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
