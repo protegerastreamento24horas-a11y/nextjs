@@ -6,22 +6,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // Modelo para configuração da rifa
 model RaffleConfig {
-  id                   String   @id @default(uuid())
-  ticketPrice          Float    @default(1000) // Preço do bilhete em R$
-  prizeValue           Float    @default(10000) // Valor do prêmio em R$
-  maxNumber            Int      @default(10000) // Número máximo para sorteio
-  winningNumbers       String   // Números premiados separados por vírgula
-  autoDrawnNumbers     Int      @default(1) // Quantidade de números sorteados automaticamente
-  winningProbability   Int      @default(100) // Probabilidade de ganhar (0-100)
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  ticketPrice         Float
+  prizeValue          Float
+  maxNumber           Int
+  winningNumbers      String
+  autoDrawnNumbers    Int
+  winningProbability  Int
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // Modelo para os prêmios
@@ -41,29 +41,27 @@ model Prize {
 
 // Modelo para os bilhetes das rifas
 model Ticket {
-  id          String   @id @default(uuid())
-  userName    String
-  userEmail   String?
-  purchaseDate DateTime @default(now())
-  isWinner    Boolean  @default(false)
-  ip          String?
-  userAgent   String?
-  selectedNumber Int?   // Número selecionado pelo usuário (opcional)
-  drawnNumbers String?  // Números sorteados automaticamente (separados por vírgula)
-  prize       Prize?   @relation(fields: [prizeId], references: [id])
-  prizeId     String?
-  winner      Winner?
+  id             String   @id @default(uuid())
+  userName       String
+  userEmail      String?
+  purchaseDate   DateTime @default(now())
+  isWinner       Boolean  @default(false)
+  ip             String?
+  userAgent      String?
+  selectedNumber Int?
+  drawnNumbers   String?
+  prizeId        String?
+  prize          Prize?   @relation(fields: [prizeId], references: [id])
 }
 
 // Modelo para os vencedores
 model Winner {
-  id          String   @id @default(uuid())
-  ticketId    String   @unique
-  userName    String
-  userEmail   String?
-  prizeDate   DateTime @default(now())
-  drawnNumbers String  // Números que foram sorteados
-  prize       Prize?   @relation(fields: [prizeId], references: [id])
-  prizeId     String?
-  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  id         String   @id @default(uuid())
+  ticketId   String   @unique
+  userName   String
+  userEmail  String?
+  prizeDate  DateTime @default(now())
+  drawnNumbers String
+  prizeId    String?
+  prize      Prize?   @relation(fields: [prizeId], references: [id])
 }

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       
       const alg = 'HS256';
       
-      const jwt = await new jose.SignJWT({ username })
+      const jwt = await new jose.SignJWT({ username, role: 'admin' })
         .setProtectedHeader({ alg })
         .setIssuedAt()
         .setExpirationTime('24h')
@@ -48,9 +48,9 @@ export async function POST(request: Request) {
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24, // 24 horas
         path: '/',
+        sameSite: 'strict'
       });
-
-      // Retornar resposta com cookie
+      
       return response;
     } else {
       return NextResponse.json(
@@ -59,66 +59,9 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error("Erro no login:", error);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    // Verificar token
-    const authHeader = request.headers.get('authorization');
-    let token = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7); // Remove "Bearer "
-    }
-    
-    // Se não encontrou no header, verificar nos cookies
-    if (!token) {
-      const cookieHeader = request.headers.get('cookie');
-      if (cookieHeader) {
-        const cookies = cookieHeader.split(';').map(cookie => cookie.trim());
-        const tokenCookie = cookies.find(cookie => cookie.startsWith('admin_token='));
-        if (tokenCookie) {
-          token = tokenCookie.split('=')[1];
-        }
-      }
-    }
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Token não fornecido' },
-        { status: 401 }
-      );
-    }
-    
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || 'super-secret-jwt-key'
-    );
-    
-    try {
-      const { payload } = await jose.jwtVerify(token, secret);
-      
-      return NextResponse.json({
-        user: {
-          username: payload.username,
-          role: 'admin'
-        }
-      });
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Token inválido' },
-        { status: 401 }
-      );
-    }
-  } catch (error) {
-    console.error('Erro na verificação do token:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }

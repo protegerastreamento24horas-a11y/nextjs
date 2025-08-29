@@ -35,6 +35,16 @@ Entre em contato conosco respondendo a este e-mail para receber seu prêmio.
 
 Atenciosamente,
 Equipe Rifa Premiada`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #8b5cf6;">🎉 Parabéns, ${winnerData.userName}!</h2>
+          <p>Você foi sorteado na nossa <strong>Rifa Premiada</strong> e ganhou:</p>
+          <h3 style="color: #ec4899;">${winnerData.prizeName}</h3>
+          <p>Entre em contato conosco respondendo a este e-mail para receber seu prêmio.</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p><small>Atenciosamente,<br>Equipe Rifa Premiada</small></p>
+        </div>
+      `
     };
 
     // Em produção, verificar se as variáveis de ambiente estão definidas
@@ -49,83 +59,36 @@ Equipe Rifa Premiada`,
       const nodemailer = await import('nodemailer');
       
       // Evitar problemas de tipagem usando then/catch
-      return await new Promise<EmailResult>((resolve) => {
-        nodemailer.default.createTransport({
+      try {
+        const transporter = nodemailer.createTransporter({
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_SECURE === 'true',
+          secure: false, // true for 465, false for other ports
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
-        }).sendMail(mailOptions)
-          .then((info: any) => {
-            console.log('E-mail enviado:', info.messageId);
-            resolve({ success: true, messageId: info.messageId });
-          })
-          .catch((sendError: any) => {
-            console.error('Erro ao enviar e-mail:', sendError);
-            resolve({ success: false, error: sendError.message || 'Erro ao enviar e-mail' });
-          });
-      });
-    } else {
-      // Em desenvolvimento, apenas simular o envio
-      return await simulateEmailSending(mailOptions);
-    }
-  } catch (error: any) {
-    console.error('Erro ao enviar e-mail:', error);
-    return { success: false, error: error.message || 'Erro desconhecido' };
-  }
-};
+        });
 
-// Enviar notificação para administradores
-export const sendAdminNotification = async (subject: string, message: string): Promise<EmailResult> => {
-  try {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@rifapremiada.com';
-    
-    const mailOptions = {
-      to: adminEmail,
-      subject: `[Rifa Premiada] ${subject}`,
-      text: message,
-    };
+        const info = await transporter.sendMail({
+          from: `"Rifa Premiada" <${process.env.SMTP_USER}>`,
+          to: mailOptions.to,
+          subject: mailOptions.subject,
+          text: mailOptions.text,
+          html: mailOptions.html
+        });
 
-    // Em produção, verificar se as variáveis de ambiente estão definidas
-    if (process.env.NODE_ENV === 'production') {
-      // Verificar se as variáveis de ambiente necessárias estão definidas
-      if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.warn('Configurações de SMTP incompletas. Notificação não enviada.');
-        return { success: false, error: 'Configurações de SMTP incompletas' };
+        return { success: true, messageId: info.messageId };
+      } catch (error) {
+        console.error('Erro ao enviar e-mail:', error);
+        return { success: false, error: 'Falha ao enviar e-mail' };
       }
-
-      // Em produção, usar nodemailer para enviar o e-mail
-      const nodemailer = await import('nodemailer');
-      
-      // Evitar problemas de tipagem usando then/catch
-      return await new Promise<EmailResult>((resolve) => {
-        nodemailer.default.createTransport({
-          host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_SECURE === 'true',
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        }).sendMail(mailOptions)
-          .then((info: any) => {
-            console.log('Notificação enviada:', info.messageId);
-            resolve({ success: true, messageId: info.messageId });
-          })
-          .catch((sendError: any) => {
-            console.error('Erro ao enviar notificação:', sendError);
-            resolve({ success: false, error: sendError.message || 'Erro ao enviar notificação' });
-          });
-      });
     } else {
-      // Em desenvolvimento, apenas simular o envio
+      // Em desenvolvimento, simular o envio
       return await simulateEmailSending(mailOptions);
     }
-  } catch (error: any) {
-    console.error('Erro ao enviar notificação:', error);
-    return { success: false, error: error.message || 'Erro desconhecido' };
+  } catch (error) {
+    console.error('Erro inesperado ao enviar e-mail:', error);
+    return { success: false, error: 'Erro inesperado ao enviar e-mail' };
   }
 };

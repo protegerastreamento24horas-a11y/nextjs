@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for') || 'IP desconhecido';
     const userAgent = request.headers.get('user-agent') || 'User agent desconhecido';
 
-    // Validar dados
+    // Validar dados obrigatórios
     if (!userName) {
       return NextResponse.json(
         { error: 'Nome é obrigatório' },
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           maxNumber: 10000,  // Sorteio entre 1 e 10.000
           winningNumbers: "100,88,14", // Números premiados padrão
           autoDrawnNumbers: 1, // 1 número sorteado automaticamente
-          winningProbability: 100 // 100% de probabilidade
+          winningProbability: 10 // 10% de probabilidade
         }
       });
     }
@@ -84,10 +84,20 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Erro ao processar compra:", error);
+    
+    // Remover bilhete temporário em caso de erro
+    if (error instanceof Error && 'ticketId' in error) {
+      await prisma.ticket.delete({
+        where: { id: error.ticketId as number }
+      });
+    }
+    
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -108,105 +118,107 @@ export async function PUT(request: Request) {
       if (ticket) {
         // Se o pagamento foi confirmado (status = 1)
         if (body.status === 1) {
-          // Obter configuração da rifa
-          const raffleConfig = await prisma.raffleConfig.findFirst({
-            where: { isActive: true }
-          });
-
-          if (!raffleConfig) {
-            throw new Error('Configuração da rifa não encontrada');
-          }
-
-          // Atualizar status do pagamento
+          // Atualizar bilhete como pago
           await prisma.ticket.update({
             where: { id: ticket.id },
-            data: { isWinner: false } // Status temporário, será atualizado após sorteio
+            data: { 
+              purchaseDate: new Date()
+            }
           });
 
-          // Verificar probabilidade de ganhar
-          const probabilityCheck = Math.floor(Math.random() * 100) + 1; // 1-100
-          const isWinnerByProbability = probabilityCheck <= raffleConfig.winningProbability;
-
-          // Se a probabilidade for 0, nunca ganha
-          if (raffleConfig.winningProbability === 0) {
-            // Não há chance de ganhar
-            return NextResponse.json({
-              success: true,
-              message: "Pagamento confirmado, mas sem chance de ganhar."
-            });
-          }
-
-          // Sortear números automaticamente
-          const drawnNumbers = [];
-          for (let i = 0; i < raffleConfig.autoDrawnNumbers; i++) {
-            const drawnNumber = Math.floor(Math.random() * raffleConfig.maxNumber) + 1;
-            drawnNumbers.push(drawnNumber);
-          }
+          // Verificar se o usuário ganhou
+          // Esta é uma implementação simplificada - em produção, seria mais complexa
+          const isWinner = Math.random() * 100 < 10; // 10% de chance de ganhar
           
-          // Atualizar bilhete com os números sorteados
-          await prisma.ticket.update({
-            where: { id: ticket.id },
-            data: { drawnNumbers: drawnNumbers.join(',') }
-          });
-
-          // Verificar se o número sorteado está entre os números premiados
-          const winningNumbersArray = raffleConfig.winningNumbers.split(',').map(num => parseInt(num.trim()));
-          const isWinner = isWinnerByProbability && winningNumbersArray.some(num => drawnNumbers.includes(num));
-
-          // Atualizar status de vencedor
-          await prisma.ticket.update({
-            where: { id: ticket.id },
-            data: { isWinner }
-          });
-
-          // Se for vencedor, criar registro na tabela Winner
           if (isWinner) {
-            const prize = await prisma.prize.findFirst({
-              where: { isActive: true },
-              orderBy: { rarity: 'desc' }
+            // Selecionar um prêmio aleatório
+            const prizes = await prisma.prize.findMany({
+              where: { isActive: true }
             });
-
-            await prisma.winner.create({
-              data: {
-                ticketId: ticket.id,
-                userName: ticket.userName,
-                userEmail: ticket.userEmail,
-                drawnNumbers: drawnNumbers.join(','),
-                prizeId: prize?.id
+            
+            if (prizes.length > 0) {
+              const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+              
+              // Atualizar bilhete como vencedor
+              await prisma.ticket.update({
+                where: { id: ticket.id },
+                data: {
+                  isWinner: true,
+                  prizeId: randomPrize.id
+                }
+              });
+              
+              // Criar registro de vencedor
+              const winner = await prisma.winner.create({
+                data: {
+                  ticketId: ticket.id,
+                  userName: ticket.userName,
+                  userEmail: ticket.userEmail,
+                  drawnNumbers: ticket.drawnNumbers || '',
+                  prizeId: randomPrize.id
+                }
+              });
+              
+              // Enviar e-mail para o vencedor (se tiver e-mail)
+              if (ticket.userEmail) {
+                await sendWinnerEmail({
+                  userName: ticket.userName,
+                  userEmail: ticket.userEmail,
+                  prizeName: randomPrize.name
+                });
               }
-            });
-
-            // Enviar e-mail para o vencedor (se tiver e-mail)
-            if (ticket.userEmail) {
-              await sendWinnerEmail(ticket.userEmail, ticket.userName, prize);
             }
           }
-
-          return NextResponse.json({
-            success: true,
-            message: "Pagamento confirmado e sorteio realizado."
-          });
-        } else {
-          // Pagamento não confirmado
-          await prisma.ticket.update({
-            where: { id: ticket.id },
-            data: { isWinner: false }
-          });
-
-          return NextResponse.json({
-            success: true,
-            message: "Status do pagamento atualizado."
+        } else if (body.status === 2) {
+          // Pagamento falhou - remover o bilhete
+          await prisma.ticket.delete({
+            where: { id: ticket.id }
           });
         }
       }
     }
-
-    return NextResponse.json({ success: true });
+    
+    return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Erro ao processar webhook:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// Obter vencedores (usado na página principal)
+export async function GET() {
+  try {
+    const winners = await prisma.winner.findMany({
+      orderBy: {
+        prizeDate: 'desc'
+      },
+      take: 10, // Últimos 10 vencedores
+      include: {
+        ticket: true,
+        prize: true
+      }
+    });
+
+    const formattedWinners = winners.map(winner => ({
+      userName: winner.userName,
+      prizeDate: winner.prizeDate.toISOString(),
+      prizeName: winner.prize?.name || 'Prêmio não identificado',
+      drawnNumbers: winner.drawnNumbers
+    }));
+
+    return NextResponse.json(formattedWinners);
+  } catch (error) {
+    console.error("Erro ao buscar vencedores:", error);
+    return NextResponse.json(
+      { error: "Erro interno do servidor" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }
