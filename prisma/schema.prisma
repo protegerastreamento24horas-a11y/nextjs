@@ -10,6 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo para os prêmios
+model Prize {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String?
+  value       Float
+  rarity      Int      @default(1) // 1=comum, 2=incomum, 3=raro, 4=épico, 5=lendário
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tickets     Ticket[]
+  winners     Winner[]
+}
+
 // Modelo para os bilhetes das rifas
 model Ticket {
   id          String   @id @default(uuid())
@@ -17,8 +32,10 @@ model Ticket {
   userEmail   String?
   purchaseDate DateTime @default(now())
   isWinner    Boolean  @default(false)
-  ip          String?  // IP do comprador para rastreamento
-  userAgent   String?  // User agent para rastreamento
+  ip          String?
+  userAgent   String?
+  prize       Prize?   @relation(fields: [prizeId], references: [id])
+  prizeId     String?
   winner      Winner?
 }
 
@@ -29,5 +46,7 @@ model Winner {
   userName    String
   userEmail   String?
   prizeDate   DateTime @default(now())
+  prize       Prize?   @relation(fields: [prizeId], references: [id])
+  prizeId     String?
   ticket      Ticket   @relation(fields: [ticketId], references: [id])
 }

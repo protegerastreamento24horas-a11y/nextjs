@@ -211,18 +211,36 @@ export default function AdminPanel() {
     ],
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-            Painel Administrativo - Rifa Premiada
-          </h1>
-          <p className="text-gray-400 mt-2">Gerencie sua rifa e acompanhe as estatísticas</p>
+        <header className="mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Painel Administrativo - Rifa Premiada
+              </h1>
+              <p className="text-gray-400 mt-1">Bem-vindo, {user.username}!</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-300"
+            >
+              Sair
+            </button>
+          </div>
         </header>
 
         {/* Navegação por abas */}
-        <div className="flex border-b border-gray-700 mb-6">
+        <div className="flex flex-wrap border-b border-gray-700 mb-6">
           <button
             className={`py-2 px-4 font-medium ${activeTab === 'dashboard' ? 'border-b-2 border-purple-500 text-purple-400' : 'text-gray-400'}`}
             onClick={() => setActiveTab('dashboard')}
@@ -240,6 +258,12 @@ export default function AdminPanel() {
             onClick={() => setActiveTab('winners')}
           >
             Vencedores
+          </button>
+          <button
+            className={`py-2 px-4 font-medium ${activeTab === 'prizes' ? 'border-b-2 border-purple-500 text-purple-400' : 'text-gray-400'}`}
+            onClick={() => setActiveTab('prizes')}
+          >
+            Prêmios
           </button>
           <button
             className={`py-2 px-4 font-medium ${activeTab === 'settings' ? 'border-b-2 border-purple-500 text-purple-400' : 'text-gray-400'}`}
@@ -390,6 +414,25 @@ export default function AdminPanel() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'prizes' && (
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Gerenciamento de Prêmios</h2>
+              <button
+                onClick={() => router.push('/admin/prizes')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+              >
+                Gerenciar Prêmios
+              </button>
+            </div>
+            
+            <div className="text-center py-8 text-gray-400">
+              <p>Clique no botão acima para gerenciar os prêmios disponíveis para as rifas.</p>
+              <p className="mt-2">Você pode adicionar, editar e excluir prêmios, além de definir sua raridade e valor.</p>
+            </div>
           </div>
         )}
 

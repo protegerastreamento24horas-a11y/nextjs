@@ -41,32 +41,71 @@ export async function POST(request: Request) {
 
     // Se for vencedor, registrar na tabela de vencedores
     if (isWinner) {
-      await prisma.winner.create({
-        data: {
-          ticketId: ticket.id,
-          userName: ticket.userName,
-          userEmail: ticket.userEmail,
-        },
+      // Selecionar um prêmio aleatório entre os ativos
+      const activePrizes = await prisma.prize.findMany({
+        where: { isActive: true }
       });
-
-      // Atualizar o bilhete como vencedor
-      await prisma.ticket.update({
-        where: { id: ticket.id },
-        data: { isWinner: true },
-      });
-
-      // Enviar e-mail para o vencedor (se tiver e-mail)
-      if (userEmail) {
-        await sendWinnerEmail({
-          userName,
-          userEmail,
-          prizeName: "Prêmio Especial da Rifa"
+      
+      let prize = null;
+      if (activePrizes.length > 0) {
+        // Selecionar um prêmio aleatório
+        const randomIndex = Math.floor(Math.random() * activePrizes.length);
+        prize = activePrizes[randomIndex];
+        
+        // Associar o prêmio ao bilhete
+        await prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { 
+            isWinner: true,
+            prizeId: prize.id
+          },
+        });
+        
+        // Registrar na tabela de vencedores
+        await prisma.winner.create({
+          data: {
+            ticketId: ticket.id,
+            userName: ticket.userName,
+            userEmail: ticket.userEmail,
+            prizeId: prize.id
+          },
+        });
+      } else {
+        // Caso não haja prêmios ativos, apenas marcar como vencedor
+        await prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { isWinner: true },
+        });
+        
+        await prisma.winner.create({
+          data: {
+            ticketId: ticket.id,
+            userName: ticket.userName,
+            userEmail: ticket.userEmail,
+          },
         });
       }
 
+      // Enviar e-mail para o vencedor (se tiver e-mail)
+      if (userEmail) {
+        const prizeName = prize ? prize.name : "Prêmio Especial da Rifa";
+        await sendWinnerEmail({
+          userName,
+          userEmail,
+          prizeName
+        });
+      }
+
+      const prizeName = prize ? prize.name : "um prêmio especial";
       return NextResponse.json({
         isWinner: true,
-        message: "Parabéns, você ganhou! Entre em contato conosco para receber seu prêmio.",
+        message: `Parabéns, você ganhou ${prizeName}! Entre em contato conosco para receber seu prêmio.`,
+        prize: prize ? {
+          id: prize.id,
+          name: prize.name,
+          description: prize.description,
+          value: prize.value
+        } : null
       });
     } else {
       return NextResponse.json({
@@ -85,19 +124,27 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    // Buscar os últimos 3 vencedores
+    // Buscar os últimos 3 vencedores com informações do prêmio
     const winners = await prisma.winner.findMany({
       orderBy: {
         prizeDate: 'desc',
       },
       take: 3,
-      select: {
-        userName: true,
-        prizeDate: true,
-      },
+      include: {
+        prize: true,
+        ticket: true
+      }
     });
 
-    return NextResponse.json(winners);
+    // Formatar os dados para o frontend
+    const formattedWinners = winners.map(winner => ({
+      userName: winner.userName,
+      prizeDate: winner.prizeDate,
+      prizeName: winner.prize?.name || "Prêmio Especial",
+      ticketId: winner.ticketId
+    }));
+
+    return NextResponse.json(formattedWinners);
   } catch (error) {
     console.error("Erro ao buscar vencedores:", error);
     return NextResponse.json(

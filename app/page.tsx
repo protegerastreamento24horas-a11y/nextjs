@@ -6,12 +6,13 @@ import Image from "next/image";
 type Winner = {
   userName: string;
   prizeDate: string;
+  prizeName: string;
 };
 
 export default function Home() {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [result, setResult] = useState<{ isWinner: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ isWinner: boolean; message: string; prize?: any } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [winners, setWinners] = useState<Winner[]>([]);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -135,27 +136,25 @@ export default function Home() {
           <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
             <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden mb-6">
               <div className="bg-gradient-to-br from-purple-500 to-pink-600 w-full h-full flex items-center justify-center">
-                <span className="text-4xl font-bold">PRÊMIO ESPECIAL</span>
+                <span className="text-4xl font-bold">PRÊMIOS ESPECIAIS</span>
               </div>
             </div>
-            <h2 className="text-2xl font-bold mb-4">Prêmio Especial</h2>
+            <h2 className="text-2xl font-bold mb-4">Prêmios Disponíveis</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Detalhes do Prêmio</h3>
+                <h3 className="font-bold text-yellow-400 mb-2">Prêmios Comuns</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• Produto de alta qualidade</li>
-                  <li>• Marca reconhecida</li>
-                  <li>• Valor estimado: R$ 1.000,00</li>
-                  <li>• Entrega grátis</li>
+                  <li>• Vales-compra</li>
+                  <li>• Produtos eletrônicos</li>
+                  <li>• Itens de valor médio</li>
                 </ul>
               </div>
               <div className="bg-gray-700/50 p-4 rounded-lg">
-                <h3 className="font-bold text-yellow-400 mb-2">Como Participar</h3>
+                <h3 className="font-bold text-yellow-400 mb-2">Prêmios Raros</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• Preencha seus dados</li>
-                  <li>• Pague R$ 5,00 por bilhete</li>
-                  <li>• Aguarde o sorteio</li>
-                  <li>• Boa sorte!</li>
+                  <li>• Smartphones premium</li>
+                  <li>• Viagens nacionais</li>
+                  <li>• Itens de alto valor</li>
                 </ul>
               </div>
             </div>
@@ -201,6 +200,7 @@ export default function Home() {
                   <li>Cada bilhete custa R$ 5,00</li>
                   <li>Sorteio ocorre a cada 7 dias</li>
                   <li>100% seguro e transparente</li>
+                  <li>Prêmios variados por raridade</li>
                 </ul>
               </div>
               <button
@@ -219,6 +219,12 @@ export default function Home() {
                   {result.isWinner ? "🎉 Parabéns! 🎉" : "😢 Não foi dessa vez 😢"}
                 </p>
                 <p>{result.message}</p>
+                {result.isWinner && result.prize && (
+                  <div className="mt-4 p-3 bg-white/10 rounded-lg">
+                    <p className="font-bold">Prêmio: {result.prize.name}</p>
+                    <p className="text-sm">Valor estimado: R$ {result.prize.value.toFixed(2)}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -233,6 +239,9 @@ export default function Home() {
                 <div key={index} className="bg-gradient-to-br from-yellow-600/30 to-yellow-800/30 border border-yellow-600/50 rounded-lg p-4 text-center transform hover:scale-105 transition duration-300">
                   <p className="font-bold">{winner.userName}</p>
                   <p className="text-sm text-gray-300">
+                    Ganhou: {winner.prizeName}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
                     Sorteado em {new Date(winner.prizeDate).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
