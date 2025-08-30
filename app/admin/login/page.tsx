@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function AdminLogin({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<any> | { [key: string]: string | string[] | undefined };
 }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -16,16 +16,19 @@ export default function AdminLogin({
 
   // Verificar se há mensagens de erro nos parâmetros da URL
   useEffect(() => {
-    const urlError = searchParams.error;
-    const redirectedFrom = searchParams.redirectedFrom;
-    
-    if (urlError === 'invalid_token') {
-      setError('Sessão expirada. Por favor, faça login novamente.');
-    }
-    
-    if (redirectedFrom) {
-      setError(`Acesso negado à página ${redirectedFrom}. Faça login para continuar.`);
-    }
+    // Resolver searchParams se for uma Promise
+    Promise.resolve(searchParams).then((params) => {
+      const urlError = params?.error;
+      const redirectedFrom = params?.redirectedFrom;
+      
+      if (urlError === 'invalid_token') {
+        setError('Sessão expirada. Por favor, faça login novamente.');
+      }
+      
+      if (redirectedFrom) {
+        setError(`Acesso negado à página ${redirectedFrom}. Faça login para continuar.`);
+      }
+    });
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
