@@ -3,11 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminLogin({
-  searchParams
-}: {
-  searchParams: Promise<any> | { [key: string]: string | string[] | undefined };
-}) {
+export default function AdminLogin({ searchParams }: any) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
