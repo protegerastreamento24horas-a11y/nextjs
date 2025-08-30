@@ -15,11 +15,17 @@ export async function middleware(request: NextRequest) {
   // Verificar se a rota é pública
   const isPublicPath = publicPaths.some(path => pathname === path);
   
+  console.log('Middleware executando para:', pathname);
+  console.log('É rota pública?', isPublicPath);
+  
   // Proteger rotas administrativas
   if (pathname.startsWith('/admin') && !isPublicPath) {
     // Verificar token de autenticação
     const authHeader = request.headers.get('authorization');
     const token = request.cookies.get('admin_token')?.value;
+    
+    console.log('Token no header:', authHeader);
+    console.log('Token no cookie:', token);
     
     // Se não tem token no header, verificar no cookie
     const authToken = authHeader?.startsWith('Bearer ') 
@@ -27,6 +33,7 @@ export async function middleware(request: NextRequest) {
       : token;
     
     if (!authToken) {
+      console.log('Nenhum token encontrado, redirecionando para login');
       // Redirecionar para login se for acesso via navegador
       if (pathname !== '/admin/login') {
         return NextResponse.redirect(new URL('/admin/login', request.url));
@@ -40,7 +47,8 @@ export async function middleware(request: NextRequest) {
         process.env.JWT_SECRET || 'super-secret-jwt-key'
       );
       
-      await jose.jwtVerify(authToken, secret);
+      const { payload } = await jose.jwtVerify(authToken, secret);
+      console.log('Token verificado com sucesso:', payload);
       
       // Se for uma requisição para a API, continuar
       if (pathname.startsWith('/api/admin')) {
@@ -62,6 +70,7 @@ export async function middleware(request: NextRequest) {
       });
       return response;
     } catch (error) {
+      console.log('Erro ao verificar token:', error);
       // Token inválido, redirecionar para login
       const response = NextResponse.redirect(new URL('/admin/login', request.url));
       response.cookies.delete('admin_token');

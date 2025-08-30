@@ -45,6 +45,11 @@ export default function AdminLogin() {
     }
   };
 
+  // Função para testar credenciais
+  const testCredentials = () => {
+    alert(`Credenciais atuais:\nUsuário: admin\nSenha: password`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 to-black flex items-center justify-center p-4">
       <div className="bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
@@ -116,6 +121,15 @@ export default function AdminLogin() {
             )}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button 
+            onClick={testCredentials}
+            className="text-xs text-gray-500 hover:text-gray-400 underline"
+          >
+            Mostrar credenciais de teste
+          </button>
+        </div>
 
         <div className="mt-8 text-center text-xs text-gray-500">
           <p>Área restrita - somente administradores autorizados</p>
