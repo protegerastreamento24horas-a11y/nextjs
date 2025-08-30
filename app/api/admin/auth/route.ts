@@ -10,12 +10,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { username, password } = body;
 
-    console.log('Tentativa de login:', { username, password });
-    console.log('Credenciais esperadas:', { 
-      expectedUsername: ADMIN_USERNAME, 
-      expectedPassword: ADMIN_PASSWORD 
-    });
-
     // Validar credenciais
     if (!username || !password) {
       return NextResponse.json(
@@ -25,10 +19,8 @@ export async function POST(request: Request) {
     }
 
     // Verificar credenciais (em produção, use bcrypt ou outro método seguro)
-    // Corrigido para fazer comparação case-insensitive
     if (username.toString().trim() === ADMIN_USERNAME.toString().trim() && 
         password.toString().trim() === ADMIN_PASSWORD.toString().trim()) {
-      console.log('Credenciais corretas, gerando token...');
       
       // Gerar token JWT
       const secret = new TextEncoder().encode(
@@ -42,8 +34,6 @@ export async function POST(request: Request) {
         .setIssuedAt()
         .setExpirationTime('24h')
         .sign(secret);
-
-      console.log('Token gerado com sucesso');
 
       // Criar resposta com token
       const response = NextResponse.json({
@@ -65,7 +55,6 @@ export async function POST(request: Request) {
       
       return response;
     } else {
-      console.log('Credenciais inválidas');
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
