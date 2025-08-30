@@ -1,20 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-export default function AdminLogin() {
+export default function AdminLogin({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Verificar se há mensagens de erro nos parâmetros da URL
   useEffect(() => {
-    const urlError = searchParams.get('error');
-    const redirectedFrom = searchParams.get('redirectedFrom');
+    const urlError = searchParams.error;
+    const redirectedFrom = searchParams.redirectedFrom;
     
     if (urlError === 'invalid_token') {
       setError('Sessão expirada. Por favor, faça login novamente.');
