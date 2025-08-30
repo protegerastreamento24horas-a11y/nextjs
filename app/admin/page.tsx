@@ -172,7 +172,13 @@ export default function AdminPanel() {
 
   const fetchRaffleConfig = async () => {
     try {
-      const response = await fetch('/api/admin/raffle-config');
+      const token = localStorage.getItem('admin_token') || getCookie('admin_token');
+      const response = await fetch('/api/admin/raffle-config', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
       if (response.ok) {
         const config: RaffleConfig = await response.json();
         setRaffleConfig(config);
@@ -182,6 +188,11 @@ export default function AdminPanel() {
         setWinningNumbers(config.winningNumbers);
         setAutoDrawnNumbers(config.autoDrawnNumbers.toString());
         setWinningProbability(config.winningProbability.toString());
+      } else if (response.status === 401) {
+        // Token inválido, redirecionar para login
+        localStorage.removeItem('admin_token');
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.push('/admin/login');
       }
     } catch (error) {
       console.error("Erro ao buscar configuração da rifa:", error);
@@ -190,14 +201,32 @@ export default function AdminPanel() {
 
   const fetchBannerImage = async () => {
     try {
-      const response = await fetch('/api/admin/banner');
+      const token = localStorage.getItem('admin_token') || getCookie('admin_token');
+      const response = await fetch('/api/admin/banner', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
       if (response.ok) {
         const data = await response.json();
         setBannerImage(data.imageUrl);
+      } else if (response.status === 401) {
+        // Token inválido, redirecionar para login
+        localStorage.removeItem('admin_token');
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.push('/admin/login');
       }
     } catch (error) {
       console.error("Erro ao buscar imagem do banner:", error);
     }
+  };
+
+  // Função auxiliar para obter cookies
+  const getCookie = (name: string) => {
+    const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+    const cookie = cookies.find(cookie => cookie.startsWith(`${name}=`));
+    return cookie ? cookie.split('=')[1] : null;
   };
 
   const getLast7DaysTickets = (tickets: Ticket[]) => {
@@ -228,7 +257,7 @@ export default function AdminPanel() {
     try {
       setConfigError("");
       
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem('admin_token') || getCookie('admin_token');
       const response = await fetch('/api/admin/raffle-config', {
         method: 'PUT',
         headers: {
@@ -249,6 +278,11 @@ export default function AdminPanel() {
         const updatedConfig = await response.json();
         setRaffleConfig(updatedConfig);
         alert('Configuração da rifa atualizada com sucesso!');
+      } else if (response.status === 401) {
+        // Token inválido, redirecionar para login
+        localStorage.removeItem('admin_token');
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.push('/admin/login');
       } else {
         const data = await response.json();
         setConfigError(data.error || 'Erro ao atualizar a configuração da rifa');
@@ -276,7 +310,7 @@ export default function AdminPanel() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem('admin_token') || getCookie('admin_token');
       const response = await fetch('/api/admin/banner', {
         method: 'POST',
         headers: {
@@ -294,6 +328,11 @@ export default function AdminPanel() {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+      } else if (response.status === 401) {
+        // Token inválido, redirecionar para login
+        localStorage.removeItem('admin_token');
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.push('/admin/login');
       } else {
         setUploadMessage(data.error || 'Erro ao atualizar o banner');
       }

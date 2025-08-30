@@ -8,7 +8,9 @@ export default function Banner() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchBannerImage();
+    fetchBannerImage().catch(error => 
+      console.error("Erro ao inicializar imagem do banner:", error)
+    );
   }, []);
 
   const fetchBannerImage = async () => {
@@ -34,8 +36,13 @@ export default function Banner() {
           src={bannerImage}
           alt="Banner Rifa Premiada"
           fill
-          className="object-cover"
+          className="object-cover transition-opacity duration-500"
           priority
+          onError={() => {
+            if (bannerImage !== '/banner-bg.svg') {
+              setBannerImage('/banner-bg.svg');
+            }
+          }}
         />
       )}
       

@@ -3,15 +3,54 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Obter configuração atual da rifa
-export async function GET() {
+// Função para verificar autenticação do administrador
+async function verifyAdminAuth(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+  
+  const token = authHeader.substring(7);
+  
+  // Em uma implementação real, você verificaria o token JWT aqui
+  // Por enquanto, vamos verificar se o token corresponde ao armazenado
   try {
+    // Este é um exemplo simples - em produção, use JWT verification
+    const storedToken = process.env.ADMIN_TOKEN;
+    return token === storedToken;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Obter configuração atual da rifa
+export async function GET(request: Request) {
+  try {
+    // Verificar autenticação
+    const isAdmin = await verifyAdminAuth(request);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
     const raffleConfig = await prisma.raffleConfig.findFirst({
       where: { isActive: true }
     });
 
     if (!raffleConfig) {
-      return NextResponse.json({ error: 'Configuração da rifa não encontrada' }, { status: 404 });
+      // Se não houver configuração, retornar valores padrão
+      return NextResponse.json({
+        id: "default",
+        ticketPrice: 1000,
+        prizeValue: 10000,
+        maxNumber: 10000,
+        winningNumbers: "100,88,14",
+        autoDrawnNumbers: 1,
+        winningProbability: 100,
+        isActive: true
+      });
     }
 
     return NextResponse.json(raffleConfig);
@@ -21,9 +60,18 @@ export async function GET() {
   }
 }
 
-// Atualizar configuração da rifa
+// Atualizar/Criar configuração da rifa
 export async function PUT(request: Request) {
   try {
+    // Verificar autenticação
+    const isAdmin = await verifyAdminAuth(request);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { 
       ticketPrice, 
@@ -115,5 +163,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error("Erro ao atualizar configuração da rifa:", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
