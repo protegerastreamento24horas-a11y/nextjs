@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -13,6 +13,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 ChartJS.register(
   CategoryScale,
@@ -70,6 +71,10 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<{username: string, role: string} | null>(null);
+  const [bannerImage, setBannerImage] = useState<string>('/banner-bg.svg');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   // Form states for raffle config
@@ -85,6 +90,7 @@ export default function AdminPanel() {
     checkAuth();
     fetchData();
     fetchRaffleConfig();
+    fetchBannerImage();
   }, []);
 
   const checkAuth = async () => {
@@ -182,6 +188,18 @@ export default function AdminPanel() {
     }
   };
 
+  const fetchBannerImage = async () => {
+    try {
+      const response = await fetch('/api/admin/banner');
+      if (response.ok) {
+        const data = await response.json();
+        setBannerImage(data.imageUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar imagem do banner:", error);
+    }
+  };
+
   const getLast7DaysTickets = (tickets: Ticket[]) => {
     const last7Days = [];
     const today = new Date();
@@ -245,6 +263,52 @@ export default function AdminPanel() {
     localStorage.removeItem('admin_token');
     document.cookie = "admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     router.push('/admin/login');
+  };
+
+  const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadMessage('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch('/api/admin/banner', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token || ''}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUploadMessage('Banner atualizado com sucesso!');
+        setBannerImage(data.imageUrl);
+        // Limpar o input de arquivo
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else {
+        setUploadMessage(data.error || 'Erro ao atualizar o banner');
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      setUploadMessage('Erro ao fazer upload do banner');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   // Dados para o gráfico de barras
@@ -681,33 +745,72 @@ export default function AdminPanel() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-xl font-semibold mb-4">Informações do Sistema</h3>
-                <div className="space-y-4">
-                  <div className="bg-gray-750 p-4 rounded-lg">
-                    <h4 className="font-bold mb-2">Tecnologias Utilizadas</h4>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                      <li>• Next.js 14 (App Router)</li>
-                      <li>• TypeScript</li>
-                      <li>• Tailwind CSS</li>
-                      <li>• Prisma ORM</li>
-                      <li>• PostgreSQL (Supabase)</li>
-                    </ul>
+                <h3 className="text-xl font-semibold mb-4">Banner do Site</h3>
+                <div className="bg-gray-750 p-4 rounded-lg">
+                  <div className="mb-4">
+                    <h4 className="font-bold mb-2">Banner Atual</h4>
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
+                      <Image
+                        src={bannerImage}
+                        alt="Banner atual"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="bg-gray-750 p-4 rounded-lg">
-                    <h4 className="font-bold mb-2">Estatísticas do Sistema</h4>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                      <li>• Total de bilhetes: {stats.totalTickets}</li>
-                      <li>• Total de vencedores: {stats.totalWinners}</li>
-                      <li>• Taxa de vitória: {stats.totalTickets > 0 ? ((stats.totalWinners/stats.totalTickets)*100).toFixed(2) : '0.00'}%</li>
-                    </ul>
+                  <div>
+                    <h4 className="font-bold mb-2">Atualizar Banner</h4>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleBannerUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      onClick={triggerFileInput}
+                      disabled={isUploading}
+                      className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                        isUploading 
+                          ? 'bg-gray-600 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                      }`}
+                    >
+                      {isUploading ? 'Enviando...' : 'Selecionar Imagem'}
+                    </button>
+                    
+                    {uploadMessage && (
+                      <div className={`mt-2 p-2 rounded text-center text-sm ${
+                        uploadMessage.includes('sucesso') 
+                          ? 'bg-green-900/50 text-green-300' 
+                          : 'bg-red-900/50 text-red-300'
+                      }`}>
+                        {uploadMessage}
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-gray-400 mt-2">
+                      Formatos suportados: JPG, PNG, GIF. Tamanho máximo: 5MB.
+                    </p>
                   </div>
+                </div>
+                
+                <div className="bg-gray-750 p-4 rounded-lg mt-6">
+                  <h4 className="font-bold mb-2">Informações do Sistema</h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Next.js 14 (App Router)</li>
+                    <li>• TypeScript</li>
+                    <li>• Tailwind CSS</li>
+                    <li>• Prisma ORM</li>
+                    <li>• PostgreSQL (Supabase)</li>
+                  </ul>
                 </div>
               </div>
               
               <div>
                 <h3 className="text-xl font-semibold mb-4">Sobre a Rifa</h3>
-                <div className="bg-gray-750 p-4 rounded-lg">
+                <div className="bg-gray-750 p-4 rounded-lg mb-6">
                   <p className="text-sm text-gray-300">
                     Esta rifa utiliza um sistema de sorteio automático onde cada bilhete 
                     comprado participa de um sorteio com números entre 1 e {raffleConfig?.maxNumber || '10000'}. 
@@ -718,6 +821,15 @@ export default function AdminPanel() {
                     em tempo real no banco de dados. A probabilidade de ganhar pode ser
                     ajustada entre 0% e 100%.
                   </p>
+                </div>
+                
+                <div className="bg-gray-750 p-4 rounded-lg">
+                  <h4 className="font-bold mb-2">Estatísticas do Sistema</h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Total de bilhetes: {stats.totalTickets}</li>
+                    <li>• Total de vencedores: {stats.totalWinners}</li>
+                    <li>• Taxa de vitória: {stats.totalTickets > 0 ? ((stats.totalWinners/stats.totalTickets)*100).toFixed(2) : '0.00'}%</li>
+                  </ul>
                 </div>
               </div>
             </div>

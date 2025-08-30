@@ -1,16 +1,43 @@
+"use client";
+
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function Banner() {
+  const [bannerImage, setBannerImage] = useState<string>('/banner-bg.svg');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBannerImage();
+  }, []);
+
+  const fetchBannerImage = async () => {
+    try {
+      const response = await fetch('/api/admin/banner');
+      if (response.ok) {
+        const data = await response.json();
+        setBannerImage(data.imageUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar imagem do banner:", error);
+      // Manter a imagem padrão em caso de erro
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-2xl mb-8">
       {/* Imagem do banner otimizada com Next.js Image */}
-      <Image
-        src="/banner-bg.svg"
-        alt="Banner Rifa Premiada"
-        fill
-        className="object-cover"
-        priority
-      />
+      {!isLoading && (
+        <Image
+          src={bannerImage}
+          alt="Banner Rifa Premiada"
+          fill
+          className="object-cover"
+          priority
+        />
+      )}
       
       {/* Conteúdo sobreposto */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 to-pink-700/80 flex items-center justify-center">
