@@ -74,6 +74,7 @@ export async function middleware(request: NextRequest) {
     }
   }
   
+  // Permitir acesso às rotas públicas
   return NextResponse.next();
 }
 
