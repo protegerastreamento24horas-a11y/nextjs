@@ -1,10 +1,31 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Banner from "./components/Banner";
+import WinnerCarousel from "./components/WinnerCarousel";
 
-export default function WinnerCarousel() {
-  // Sample winners data
+type Winner = {
+  userName: string;
+  prizeDate: string;
+  prizeName: string;
+  drawnNumbers: string;
+};
+
+export default function Home() {
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [result, setResult] = useState<{ isWinner: boolean; message: string; drawnNumbers?: number[]; prize?: any } | null>(null);
+  const [prizeValue, setPrizeValue] = useState(10000); // Valor padrão R$ 10.000,00
+  const [isLoading, setIsLoading] = useState(false);
+  const [winners, setWinners] = useState<Winner[]>([]);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [ticketPrice, setTicketPrice] = useState(1000); // Preço padrão R$ 1.000,00
+  
+  // Estados para pagamento PIX
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [copyPaste, setCopyPaste] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
   const sampleWinners = [
     { id: 1, name: "Ana Silva", prize: "Smartphone Galaxy S24", date: "2025-05-01", image: "/winner1.jpg" },
     { id: 2, name: "Carlos Oliveira", prize: "Notebook Gamer", date: "2025-05-05", image: "/winner2.jpg" },
