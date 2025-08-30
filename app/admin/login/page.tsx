@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -9,6 +9,21 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Verificar se há mensagens de erro nos parâmetros da URL
+  useEffect(() => {
+    const urlError = searchParams.get('error');
+    const redirectedFrom = searchParams.get('redirectedFrom');
+    
+    if (urlError === 'invalid_token') {
+      setError('Sessão expirada. Por favor, faça login novamente.');
+    }
+    
+    if (redirectedFrom) {
+      setError(`Acesso negado à página ${redirectedFrom}. Faça login para continuar.`);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

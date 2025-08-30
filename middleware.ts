@@ -9,14 +9,12 @@ export async function middleware(request: NextRequest) {
   const publicPaths = [
     '/',
     '/api/comprar',
-    '/admin/login'
+    '/admin/login',
+    '/admin/test-login'
   ];
   
   // Verificar se a rota é pública
   const isPublicPath = publicPaths.some(path => pathname === path);
-  
-  console.log('Middleware executando para:', pathname);
-  console.log('É rota pública?', isPublicPath);
   
   // Proteger rotas administrativas
   if (pathname.startsWith('/admin') && !isPublicPath) {
@@ -24,19 +22,17 @@ export async function middleware(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const token = request.cookies.get('admin_token')?.value;
     
-    console.log('Token no header:', authHeader);
-    console.log('Token no cookie:', token);
-    
     // Se não tem token no header, verificar no cookie
     const authToken = authHeader?.startsWith('Bearer ') 
       ? authHeader.substring(7) 
       : token;
     
     if (!authToken) {
-      console.log('Nenhum token encontrado, redirecionando para login');
       // Redirecionar para login se for acesso via navegador
       if (pathname !== '/admin/login') {
-        return NextResponse.redirect(new URL('/admin/login', request.url));
+        const loginUrl = new URL('/admin/login', request.url);
+        loginUrl.searchParams.set('redirectedFrom', pathname);
+        return NextResponse.redirect(loginUrl);
       }
       return NextResponse.next();
     }
@@ -48,7 +44,6 @@ export async function middleware(request: NextRequest) {
       );
       
       const { payload } = await jose.jwtVerify(authToken, secret);
-      console.log('Token verificado com sucesso:', payload);
       
       // Se for uma requisição para a API, continuar
       if (pathname.startsWith('/api/admin')) {
@@ -70,9 +65,10 @@ export async function middleware(request: NextRequest) {
       });
       return response;
     } catch (error) {
-      console.log('Erro ao verificar token:', error);
       // Token inválido, redirecionar para login
-      const response = NextResponse.redirect(new URL('/admin/login', request.url));
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('error', 'invalid_token');
+      const response = NextResponse.redirect(loginUrl);
       response.cookies.delete('admin_token');
       return response;
     }
