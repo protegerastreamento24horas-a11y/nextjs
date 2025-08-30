@@ -2,8 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Banner from "./components/Banner";
-import WinnerCarousel from "./components/WinnerCarousel";
+import dynamic from 'next/dynamic';
+import Wishlist from "./components/Wishlist";
+
+// Carregando componentes com lazy loading
+const Banner = dynamic(() => import('./components/Banner'), { 
+  loading: () => <div className="h-64 md:h-80 lg:h-96 bg-gray-800 rounded-xl mb-8 animate-pulse"></div>,
+  ssr: true
+});
+
+const WinnerCarousel = dynamic(() => import('./components/WinnerCarousel'), { 
+  loading: () => <div className="h-48 bg-gray-800 rounded-xl mb-8 animate-pulse"></div>,
+  ssr: true
+});
 
 type Winner = {
   userName: string;
@@ -143,10 +154,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900">
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Banner Principal */}
+        {/* Banner Principal - Carregado com lazy loading */}
         <Banner />
         
-        {/* Carrossel de Ganhadores */}
+        {/* Lista de desejos */}
+        <Wishlist />
+        
+        {/* Carrossel de Ganhadores - Carregado com lazy loading */}
         <WinnerCarousel />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
