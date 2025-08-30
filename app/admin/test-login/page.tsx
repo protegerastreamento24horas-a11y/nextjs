@@ -15,8 +15,8 @@ export default function TestLogin() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          username: "admin", 
-          password: "password" 
+          username: "ADMIN", 
+          password: "ADMIN123" 
         }),
       });
 
@@ -58,8 +58,8 @@ export default function TestLogin() {
 
       <div className="mt-8 p-4 bg-gray-800 rounded">
         <h2 className="text-xl font-semibold mb-2">Credenciais esperadas:</h2>
-        <p>Usuário: admin</p>
-        <p>Senha: password</p>
+        <p>Usuário: ADMIN</p>
+        <p>Senha: ADMIN123</p>
       </div>
     </div>
   );

@@ -103,18 +103,23 @@ export default function AdminPanel() {
         }
       }
       
+      // Se ainda não encontrar token, redirecionar para login
       if (!token) {
         router.push('/admin/login');
         return;
       }
 
-      const response = await fetch('/api/admin/auth', {
+      // Verificar se o token é válido
+      const response = await fetch('/api/admin/auth/verify', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
+        // Se a verificação falhar, limpar tokens e redirecionar para login
+        localStorage.removeItem('admin_token');
+        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         router.push('/admin/login');
         return;
       }
@@ -123,6 +128,9 @@ export default function AdminPanel() {
       setUser(data.user);
     } catch (error) {
       console.error("Erro na autenticação:", error);
+      // Em caso de erro, limpar tokens e redirecionar para login
+      localStorage.removeItem('admin_token');
+      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
       router.push('/admin/login');
     }
   };

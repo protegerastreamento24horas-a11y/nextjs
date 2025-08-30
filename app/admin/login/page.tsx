@@ -47,6 +47,8 @@ export default function AdminLogin({ searchParams }: any) {
         // Salvar token no localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem("admin_token", data.token);
+          // Também salvar nos cookies para compatibilidade
+          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
         }
         // Redirecionar para o painel
         router.push("/admin");

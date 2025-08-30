@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import * as jose from 'jose';
 
 // Em uma implementação real, essas credenciais viriam de variáveis de ambiente ou banco de dados
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'ADMIN';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ADMIN123';
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       
       // Gerar token JWT
       const secret = new TextEncoder().encode(
-        process.env.JWT_SECRET || 'super-secret-jwt-key'
+        process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
       );
       
       const alg = 'HS256';
