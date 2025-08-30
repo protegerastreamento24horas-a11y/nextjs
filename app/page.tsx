@@ -1,7 +1,70 @@
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+
+export default function WinnerCarousel() {
+  // Sample winners data
+  const sampleWinners = [
+    { id: 1, name: "Ana Silva", prize: "Smartphone Galaxy S24", date: "2025-05-01", image: "/winner1.jpg" },
+    { id: 2, name: "Carlos Oliveira", prize: "Notebook Gamer", date: "2025-05-05", image: "/winner2.jpg" },
+    { id: 3, name: "Mariana Santos", prize: "Fone de Ouvido", date: "2025-05-08", image: "/winner3.jpg" },
+    { id: 4, name: "Pedro Costa", prize: "Smartwatch", date: "2025-05-10", image: "/winner4.jpg" },
+  ];
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold mb-4">Confira os últimos ganhadores</h2>
+      <div className="relative">
+        <div className="flex overflow-x-auto pb-4 scrollbar-hide">
+          {sampleWinners.map((winner) => (
+            <div key={winner.id} className="flex-none w-64 md:w-80 bg-gray-800/50 rounded-lg p-4 m-2 hover:bg-gray-700/50 transition-colors">
+              <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden">
+                <Image 
+                  src={winner.image} 
+                  alt={`Vencedor ${winner.name}`} 
+                  width={300} 
+                  height={200} 
+                  className="object-cover"
+                />
+              </div>
+              <h3 className="font-bold text-yellow-400">{winner.name}</h3>
+              <p className="text-sm text-gray-300 mb-1">{winner.prize}</p>
+              <p className="text-xs text-gray-400">
+                {new Date(winner.date).toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-900 to-transparent z-10"></div>
+        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-900 to-transparent z-10"></div>
+      </div>
+    </div>
+  );
+}
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+
+export default function Banner() {
+  return (
+    <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden mb-8">
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+        <div className="text-center px-4">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">Rifa Premiada</h1>
+          <p className="text-xl md:text-2xl text-white/90">Concorra a prêmios incríveis com apenas R$ 10</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Banner from "./components/Banner";
+import WinnerCarousel from "./components/WinnerCarousel";
 
 type Winner = {
   userName: string;
@@ -153,14 +216,20 @@ export default function Home() {
         </p>
       </header>
 
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-        {/* Informações da rifa */}
-        <div className="lg:col-span-2 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
-          <div className="relative w-full h-64 md:h-80 rounded-xl overflow-hidden mb-6">
-            <div className="bg-gradient-to-br from-purple-500 to-pink-600 w-full h-full flex items-center justify-center">
-              <span className="text-4xl font-bold">PRÊMIOS ESPECIAIS</span>
-            </div>
-          </div>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Banner Principal */}
+        <Banner />
+        
+        {/* Carrossel de Ganhadores */}
+        <WinnerCarousel />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Formulário de compra */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
+            <h1 className="text-3xl font-bold mb-2">Compre seu bilhete</h1>
+            <p className="text-gray-400 mb-6">
+              Concorra a R$ {prizeValue.toLocaleString('pt-BR')} com apenas R$ {ticketPrice.toLocaleString('pt-BR')}
+            </p>
           <h2 className="text-2xl font-bold mb-4">Como Funciona</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-gray-700/50 p-4 rounded-lg">
@@ -286,41 +355,42 @@ export default function Home() {
             </form>
           )}
 
-          {/* Exibição do QR Code */}
-          {qrCode && (
-            <div className="text-center p-6 bg-gray-900/50 rounded-xl border border-gray-700">
-              <h3 className="text-xl font-bold mb-4">Efetue o pagamento via PIX</h3>
-              <div className="flex justify-center mb-4">
-                <Image 
-                  src={`data:image/png;base64,${qrCode}`} 
-                  alt="QR Code para pagamento" 
-                  width={200} 
-                  height={200}
-                  className="border-2 border-white rounded-lg"
-                />
+            {/* Exibição do QR Code */}
+            {qrCode && (
+              <div className="mt-6 bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+                <h3 className="text-lg font-semibold mb-3 text-center">Pagamento PIX</h3>
+                <div className="flex justify-center mb-4">
+                  <Image 
+                    src={`data:image/png;base64,${qrCode}`} 
+                    alt="QR Code PIX" 
+                    width={200} 
+                    height={200} 
+                    className="rounded-lg"
+                  />
+                </div>
+                <p className="text-sm text-gray-300 mb-4">
+                  Escaneie o QR Code ou copie o código PIX abaixo
+                </p>
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    readOnly
+                    value={copyPaste || ''}
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-sm"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-r-lg font-medium transition-colors"
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  ID do bilhete: {ticketId}
+                </p>
               </div>
-              <p className="text-sm text-gray-300 mb-4">
-                Escaneie o QR Code ou copie o código PIX abaixo
-              </p>
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  readOnly
-                  value={copyPaste || ''}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-sm"
-                />
-                <button
-                  onClick={copyToClipboard}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-r-lg font-medium transition-colors"
-                >
-                  Copiar
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                ID do bilhete: {ticketId}
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Últimos vencedores */}
