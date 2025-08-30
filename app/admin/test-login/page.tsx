@@ -26,9 +26,9 @@ export default function TestLogin() {
         ok: response.ok,
         data: data
       });
-    } catch (error) {
+    } catch (error: unknown) {
       setResult({
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
     } finally {
       setLoading(false);
