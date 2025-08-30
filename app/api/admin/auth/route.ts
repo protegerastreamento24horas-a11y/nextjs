@@ -25,7 +25,9 @@ export async function POST(request: Request) {
     }
 
     // Verificar credenciais (em produção, use bcrypt ou outro método seguro)
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // Corrigido para fazer comparação case-insensitive
+    if (username.toString().trim() === ADMIN_USERNAME.toString().trim() && 
+        password.toString().trim() === ADMIN_PASSWORD.toString().trim()) {
       console.log('Credenciais corretas, gerando token...');
       
       // Gerar token JWT
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
         }
       });
       
-      // Definir cookie com token
+      // Adicionar token como cookie
       response.cookies.set('admin_token', jwt, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -61,7 +63,6 @@ export async function POST(request: Request) {
         sameSite: 'strict'
       });
       
-      console.log('Resposta enviada com cookie');
       return response;
     } else {
       console.log('Credenciais inválidas');
@@ -71,9 +72,9 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    console.error("Erro no login:", error);
+    console.error('Erro no login:', error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
