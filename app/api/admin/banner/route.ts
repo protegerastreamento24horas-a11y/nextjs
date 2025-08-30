@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
-import jwt from 'jsonwebtoken';
 
 // Função para verificar autenticação do administrador
 async function verifyAdminAuth(request: Request) {
@@ -12,13 +11,14 @@ async function verifyAdminAuth(request: Request) {
   
   const token = authHeader.substring(7);
   
-  // Verificar o token JWT
+  // Em uma implementação real, você verificaria o token JWT aqui
+  // Por enquanto, vamos verificar se o token corresponde ao armazenado
   try {
-    const secret = process.env.JWT_SECRET || 'default_secret_key'; // Use uma chave secreta segura
-    jwt.verify(token, secret); // Verifica o token usando a chave secreta
-    return true; // Token válido
+    // Este é um exemplo simples - em produção, use JWT verification
+    const storedToken = process.env.ADMIN_TOKEN;
+    return token === storedToken;
   } catch (error) {
-    return false; // Token inválido
+    return false;
   }
 }
 
