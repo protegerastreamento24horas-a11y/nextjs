@@ -99,7 +99,8 @@ class HorsePayService {
 
   constructor() {
     this.apiUrl = process.env.HORSEPAY_API_URL || 'https://api.horsepay.io';
-    this.clientId = process.env.HORSEPAY_CLIENT_ID || '';
+    // Corrigindo para usar HORSEPAY_CLIENT_KEY em vez de HORSEPAY_CLIENT_ID
+    this.clientId = process.env.HORSEPAY_CLIENT_KEY || '';
     this.clientSecret = process.env.HORSEPAY_CLIENT_SECRET || '';
     
     if (!this.clientId || !this.clientSecret) {
@@ -191,7 +192,8 @@ Dados: ${JSON.stringify(errorData)}
         {
           payer_name: payerName,
           amount: amount,
-          callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`,
+          // Usando HORSEPAY_CALLBACK_URL diretamente em vez de NEXT_PUBLIC_BASE_URL
+          callback_url: process.env.HORSEPAY_CALLBACK_URL || `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`,
           split: split
         },
         {
@@ -227,7 +229,8 @@ Dados: ${JSON.stringify(errorData)}
           amount: amount,
           pix_key: pixKey,
           pix_type: pixType,
-          callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`
+          // Usando WEBHOOK_URL diretamente em vez de NEXT_PUBLIC_BASE_URL
+          callback_url: process.env.WEBHOOK_URL || `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`
         },
         {
           headers: {

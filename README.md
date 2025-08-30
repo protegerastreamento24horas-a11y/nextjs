@@ -46,20 +46,31 @@ npm install
 npx prisma generate
 ```
 
-3. Configure as variáveis de ambiente no arquivo `.env`:
+3. Configure as variáveis de ambiente no arquivo `.env` (use `.env.example` como modelo):
 ```env
 ADMIN_USERNAME=seu_usuario
 ADMIN_PASSWORD=sua_senha
 ADMIN_EMAIL=seu@email.com
 JWT_SECRET=sua_chave_secreta_segura
+DATABASE_URL=postgresql://usuario:senha@host:porta/banco
 ```
 
-4. Inicie o servidor de desenvolvimento:
+4. Execute as migrações do banco de dados (se necessário):
+```bash
+npx prisma db push
+```
+
+5. Popule o banco de dados com dados iniciais:
+```bash
+npm run seed
+```
+
+6. Inicie o servidor de desenvolvimento:
 ```bash
 npm run dev
 ```
 
-5. Acesse o aplicativo:
+7. Acesse o aplicativo:
 - Página principal: `http://localhost:3000`
 - Painel administrativo: `http://localhost:3000/admin`
 
@@ -71,9 +82,11 @@ app/
   ├── layout.tsx               # Layout raiz com navegação
   ├── middleware.ts            # Middleware de segurança
   ├── lib/
-  │   └── emailService.ts      # Serviço de envio de e-mails
+  │   ├── emailService.ts      # Serviço de envio de e-mails
+  │   └── horsepayService.ts   # Serviço de integração com HorsePay
   ├── api/
   │   ├── comprar/route.ts     # Endpoint de compra e sorteio
+  │   ├── pix/webhook/route.ts # Webhook para notificações de pagamento
   │   └── admin/
   │       ├── auth/route.ts    # Endpoint de autenticação
   │       ├── tickets/route.ts # Endpoint para listar bilhetes
@@ -83,7 +96,10 @@ app/
       ├── page.tsx             # Painel administrativo
       └── login/page.tsx       # Página de login
 prisma/
-  └── schema.prisma            # Definição do banco de dados
+  ├── schema.prisma            # Definição do banco de dados com Prisma
+  ├── schema.sql               # Schema SQL do banco de dados (referência)
+  ├── seed.ts                  # Script para popular o banco de dados
+  └── test-db-connection.ts    # Script para testar a conexão com o banco
 ```
 
 ## Segurança
@@ -121,6 +137,8 @@ O sistema está integrado com a HorsePay para processamento de pagamentos PIX.
 HORSEPAY_CLIENT_KEY=sua_client_key
 HORSEPAY_CLIENT_SECRET=sua_client_secret
 HORSEPAY_CALLBACK_URL=https://seudominio.com/api/pix/webhook
+WEBHOOK_URL=https://seudominio.com/api/pix/webhook
+NEXT_PUBLIC_BASE_URL=https://seudominio.com
 ```
 
 4. O sistema irá gerar QR Codes PIX para pagamento e processar os webhooks automaticamente.
@@ -131,8 +149,17 @@ Além das credenciais específicas da HorsePay, configure também:
 MERCHANT_NAME=Nome da sua empresa
 MERCHANT_CITY=Cidade
 POS_ID=POS00001
-WEBHOOK_URL=https://seudominio.com/api/pix/webhook
 ```
+
+## Testando a Integração
+
+### Testando a conexão com o banco de dados
+```bash
+npx ts-node prisma/test-db-connection.ts
+```
+
+### Testando a autenticação com a API HorsePay
+Você pode adicionar um endpoint de teste na sua API para verificar as credenciais da HorsePay.
 
 ## Configuração
 
@@ -156,6 +183,24 @@ A chance de vitória pode ser configurada no arquivo `.env` através da variáve
    - `SMTP_PASS`: Senha SMTP (opcional)
    - Credenciais da API PIX HorsePay (obrigatório)
 4. Faça o deploy clicando em "Deploy"
+
+## Solução de Problemas
+
+### Problemas comuns com o banco de dados
+
+1. **Falta do schema do Prisma**: Certifique-se de que o arquivo `prisma/schema.prisma` existe e está configurado corretamente.
+
+2. **Conexão com o banco de dados**: Verifique se a variável `DATABASE_URL` está corretamente configurada no arquivo `.env`.
+
+3. **Tabelas não existentes**: Execute `npx prisma db push` para criar as tabelas no banco de dados.
+
+### Problemas comuns com a API HorsePay
+
+1. **Credenciais incorretas**: Verifique se as variáveis `HORSEPAY_CLIENT_KEY` e `HORSEPAY_CLIENT_SECRET` estão corretamente configuradas.
+
+2. **URLs de callback**: Certifique-se de que `HORSEPAY_CALLBACK_URL` e `WEBHOOK_URL` estão configuradas com URLs válidas e acessíveis.
+
+3. **Problemas de rede**: Verifique se a URL da API HorsePay está acessível (`https://api.horsepay.io`).
 
 ## Personalização
 
@@ -188,3 +233,9 @@ Para personalizar o prêmio da rifa, substitua o conteúdo do componente de exib
    - Autenticação JWT para acesso ao painel
    - Validação de entrada aprimorada
    - Estrutura de código mais organizada
+
+5. **Correções de Integração**:
+   - Adicionado schema do Prisma para mapeamento correto do banco de dados
+   - Corrigido variáveis de ambiente da API HorsePay
+   - Adicionado script de teste de conexão com o banco de dados
+   - Atualizado documentação com instruções detalhadas
