@@ -64,7 +64,7 @@ export default function AdminLogin({ searchParams }: any) {
 
   // Função para testar credenciais
   const testCredentials = () => {
-    alert(`Credenciais atuais:\nUsuário: admin\nSenha: password`);
+    alert(`Credenciais atuais:\nUsuário: ADMIN\nSenha: ADMIN123`);
   };
 
   return (
