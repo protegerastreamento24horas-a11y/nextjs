@@ -7,12 +7,12 @@ import Wishlist from "./components/Wishlist";
 
 // Carregando componentes com lazy loading
 const Banner = dynamic(() => import('./components/Banner'), { 
-  loading: () => <div className="h-64 md:h-80 lg:h-96 bg-gray-800 rounded-xl mb-8 animate-pulse"></div>,
+  loading: () => <div className="h-64 md:h-80 lg:h-96 bg-gradient-to-r from-purple-900 to-pink-700 rounded-2xl mb-8 animate-pulse"></div>,
   ssr: true
 });
 
 const WinnerCarousel = dynamic(() => import('./components/WinnerCarousel'), { 
-  loading: () => <div className="h-48 bg-gray-800 rounded-xl mb-8 animate-pulse"></div>,
+  loading: () => <div className="h-48 bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl mb-8 animate-pulse"></div>,
   ssr: true
 });
 
@@ -147,55 +147,74 @@ export default function Home() {
   const copyToClipboard = () => {
     if (copyPaste) {
       navigator.clipboard.writeText(copyPaste);
-      alert("Código PIX copiado para a área de transferência!");
+      // Mostrar feedback visual
+      const button = document.getElementById('copy-button');
+      if (button) {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado!';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Banner Principal - Carregado com lazy loading */}
-        <Banner />
+        <div className="group">
+          <Banner />
+        </div>
         
         {/* Lista de desejos */}
         <Wishlist />
         
         {/* Carrossel de Ganhadores - Carregado com lazy loading */}
-        <WinnerCarousel />
+        <div className="group">
+          <WinnerCarousel />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulário de compra */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
-            <h1 className="text-3xl font-bold mb-2">Compre seu bilhete</h1>
-            <p className="text-gray-400 mb-6">
-              Concorra a R$ {prizeValue.toLocaleString('pt-BR')} com apenas R$ {ticketPrice.toLocaleString('pt-BR')}
-            </p>
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                Compre seu bilhete
+              </h1>
+              <p className="text-gray-400">
+                Concorra a <span className="font-bold text-yellow-400">R$ {prizeValue.toLocaleString('pt-BR')}</span> com apenas <span className="font-bold text-green-400">R$ {ticketPrice.toLocaleString('pt-BR')}</span>
+              </p>
+            </div>
 
             {/* Contador regressivo */}
-            <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-lg p-4 mb-6 border border-purple-500/30">
-              <h2 className="text-lg font-semibold mb-2 text-center">Próximo sorteio em:</h2>
+            <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-xl p-4 mb-6 border border-purple-500/30 shadow-lg">
+              <h2 className="text-lg font-semibold mb-3 text-center text-white">Próximo sorteio em:</h2>
               <div className="flex justify-center space-x-2">
                 <div className="text-center">
-                  <div className="bg-gray-700 rounded-lg py-2 px-3">
-                    <span className="text-2xl font-bold">{countdown.days.toString().padStart(2, '0')}</span>
+                  <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg py-3 px-4 shadow-md">
+                    <span className="text-2xl font-bold text-white">{countdown.days.toString().padStart(2, '0')}</span>
                   </div>
                   <span className="text-xs text-gray-400">Dias</span>
                 </div>
+                <div className="text-center flex items-center justify-center text-gray-500">:</div>
                 <div className="text-center">
-                  <div className="bg-gray-700 rounded-lg py-2 px-3">
-                    <span className="text-2xl font-bold">{countdown.hours.toString().padStart(2, '0')}</span>
+                  <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg py-3 px-4 shadow-md">
+                    <span className="text-2xl font-bold text-white">{countdown.hours.toString().padStart(2, '0')}</span>
                   </div>
                   <span className="text-xs text-gray-400">Horas</span>
                 </div>
+                <div className="text-center flex items-center justify-center text-gray-500">:</div>
                 <div className="text-center">
-                  <div className="bg-gray-700 rounded-lg py-2 px-3">
-                    <span className="text-2xl font-bold">{countdown.minutes.toString().padStart(2, '0')}</span>
+                  <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg py-3 px-4 shadow-md">
+                    <span className="text-2xl font-bold text-white">{countdown.minutes.toString().padStart(2, '0')}</span>
                   </div>
                   <span className="text-xs text-gray-400">Minutos</span>
                 </div>
+                <div className="text-center flex items-center justify-center text-gray-500">:</div>
                 <div className="text-center">
-                  <div className="bg-gray-700 rounded-lg py-2 px-3">
-                    <span className="text-2xl font-bold">{countdown.seconds.toString().padStart(2, '0')}</span>
+                  <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg py-3 px-4 shadow-md">
+                    <span className="text-2xl font-bold text-white">{countdown.seconds.toString().padStart(2, '0')}</span>
                   </div>
                   <span className="text-xs text-gray-400">Segundos</span>
                 </div>
@@ -203,53 +222,74 @@ export default function Home() {
             </div>
 
             {result?.isWinner ? (
-              <div className="bg-gradient-to-r from-yellow-900/50 to-yellow-800/50 rounded-lg p-6 mb-6 border border-yellow-500/30 text-center">
+              <div className="bg-gradient-to-r from-yellow-900/50 to-yellow-800/50 rounded-xl p-6 mb-6 border border-yellow-500/30 text-center shadow-lg">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-yellow-500 rounded-full p-3">
+                    <svg className="w-12 h-12 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                  </div>
+                </div>
                 <h2 className="text-2xl font-bold text-yellow-300 mb-2">🎉 Parabéns! 🎉</h2>
-                <p className="text-xl mb-4">{result.message}</p>
-                <div className="bg-yellow-900/30 rounded-lg p-4 inline-block">
-                  <p className="font-bold">Números sorteados:</p>
-                  <p className="text-2xl font-mono">{result.drawnNumbers?.join(', ')}</p>
+                <p className="text-xl mb-4 text-white">{result.message}</p>
+                <div className="bg-yellow-900/30 rounded-lg p-4 inline-block border border-yellow-700">
+                  <p className="font-bold text-yellow-200">Números sorteados:</p>
+                  <p className="text-2xl font-mono text-white">{result.drawnNumbers?.join(', ')}</p>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium mb-1 text-gray-300">
                     Nome completo
                   </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Digite seu nome"
-                    required
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      id="name"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="w-full bg-gray-700/50 border border-gray-600 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                      placeholder="Digite seu nome"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-300">
                     E-mail
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Digite seu e-mail"
-                    required
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      className="w-full bg-gray-700/50 border border-gray-600 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-gray-400"
+                      placeholder="Digite seu e-mail"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-3 rounded-lg font-bold transition-all ${
+                  className={`w-full py-3 rounded-lg font-bold transition-all transform hover:scale-[1.02] ${
                     isLoading
                       ? 'bg-gray-600 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg'
                   }`}
                 >
                   {isLoading ? (
@@ -268,24 +308,26 @@ export default function Home() {
             )}
 
             {result && !result.isWinner && !qrCode && (
-              <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-300">
+              <div className="mt-4 p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-300 text-center">
                 {result.message}
               </div>
             )}
 
             {qrCode && (
-              <div className="mt-6 bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                <h3 className="text-lg font-semibold mb-3 text-center">Pagamento PIX</h3>
+              <div className="mt-6 bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-xl p-5 border border-gray-600 shadow-lg">
+                <h3 className="text-lg font-semibold mb-4 text-center text-white">Pagamento PIX</h3>
                 <div className="flex justify-center mb-4">
-                  <Image 
-                    src={`data:image/png;base64,${qrCode}`} 
-                    alt="QR Code PIX" 
-                    width={200} 
-                    height={200} 
-                    className="rounded-lg"
-                  />
+                  <div className="bg-white p-2 rounded-lg shadow-lg">
+                    <Image 
+                      src={`data:image/png;base64,${qrCode}`} 
+                      alt="QR Code PIX" 
+                      width={200} 
+                      height={200} 
+                      className="rounded-lg"
+                    />
+                  </div>
                 </div>
-                <p className="text-sm text-gray-300 mb-4">
+                <p className="text-sm text-gray-300 mb-4 text-center">
                   Escaneie o QR Code ou copie o código PIX abaixo
                 </p>
                 <div className="flex items-center">
@@ -293,48 +335,71 @@ export default function Home() {
                     type="text"
                     readOnly
                     value={copyPaste || ''}
-                    className="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-sm"
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-3 text-sm text-gray-300 truncate"
                   />
                   <button
+                    id="copy-button"
                     onClick={copyToClipboard}
-                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-r-lg font-medium transition-colors"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-3 rounded-r-lg font-medium transition-colors text-white"
                   >
                     Copiar
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  ID do bilhete: {ticketId}
-                </p>
+                <div className="mt-3 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-900/50 text-blue-300 border border-blue-700">
+                    <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    ID do bilhete: {ticketId}
+                  </span>
+                </div>
               </div>
             )}
           </div>
 
           {/* Últimos vencedores */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-xl">
-            <h2 className="text-2xl font-bold mb-4">Últimos Vencedores</h2>
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">Últimos Vencedores</h2>
+              <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-3 py-1 rounded-full text-sm font-bold">
+                Ao vivo
+              </div>
+            </div>
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
               {winners.length > 0 ? (
                 winners.map((winner, index) => (
-                  <div key={index} className="bg-gray-700/50 p-4 rounded-lg border border-gray-600">
+                  <div key={index} className="bg-gradient-to-r from-gray-700/50 to-gray-800/50 p-4 rounded-xl border border-gray-600 hover:border-yellow-500/50 transition-all">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold text-yellow-400">{winner.userName}</h3>
+                        <h3 className="font-bold text-yellow-400 flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {winner.userName}
+                        </h3>
                         <p className="text-sm text-gray-300">{winner.prizeName}</p>
                       </div>
-                      <span className="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">
+                      <span className="text-xs bg-gradient-to-r from-green-600 to-emerald-700 text-white px-2 py-1 rounded-full">
                         Vencedor
                       </span>
                     </div>
-                    <div className="mt-2 text-xs text-gray-400">
+                    <div className="mt-2 text-xs text-gray-400 flex justify-between">
                       <p>Números: {winner.drawnNumbers}</p>
                       <p>{new Date(winner.prizeDate).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400 text-center py-4">
-                  Nenhum vencedor registrado ainda
-                </p>
+                <div className="text-center py-8">
+                  <div className="bg-gray-700/50 rounded-full p-3 inline-block mb-3">
+                    <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-400">
+                    Nenhum vencedor registrado ainda
+                  </p>
+                </div>
               )}
             </div>
           </div>

@@ -29,14 +29,14 @@ export default function Banner() {
   };
 
   return (
-    <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-2xl mb-8">
+    <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-2xl mb-8 group">
       {/* Imagem do banner otimizada com Next.js Image */}
       {!isLoading && (
         <Image
           src={bannerImage}
           alt="Banner Rifa Premiada"
           fill
-          className="object-cover transition-opacity duration-500"
+          className="object-cover transition-all duration-700 group-hover:scale-105"
           priority
           onError={() => {
             if (bannerImage !== '/banner-bg.svg') {
@@ -47,17 +47,20 @@ export default function Banner() {
       )}
       
       {/* Conteúdo sobreposto */}
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 to-pink-700/80 flex items-center justify-center">
-        <div className="text-center p-4">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-900/80 via-purple-800/60 to-pink-700/80 flex items-center justify-center">
+        <div className="text-center p-4 max-w-3xl">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 animate-fade-in">
             Rifa Premiada
           </h1>
-          <p className="text-lg md:text-xl text-purple-200 mb-4">
+          <p className="text-lg md:text-xl text-purple-100 mb-6 animate-fade-in-delay">
             Ganhe prêmios incríveis com nossa rifa automática
           </p>
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 inline-block">
-            <p className="text-white font-bold text-xl">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 inline-block border border-white/30 shadow-lg animate-fade-in-delay-2">
+            <p className="text-white font-bold text-xl md:text-2xl">
               Prêmio: R$ 10.000,00
+            </p>
+            <p className="text-purple-100 text-sm mt-2">
+              Bilhete por apenas R$ 1.000,00
             </p>
           </div>
         </div>
