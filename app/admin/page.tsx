@@ -87,8 +87,41 @@ export default function AdminPanel() {
   const [configError, setConfigError] = useState("");
 
   useEffect(() => {
-    // Middleware já protegeu a rota, não precisamos fazer nada aqui
-    setUser({ username: 'ADMIN', role: 'admin' });
+    console.log('=== PAINEL ADMINISTRATIVO CARREGADO ===');
+    
+    // Verificar se temos token no localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem("admin_token");
+      console.log('Token no localStorage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
+      
+      if (!token) {
+        console.log('SEM TOKEN - Redirecionando para login');
+        router.push('/admin/login?error=no_token');
+        return;
+      }
+      
+      // Verificar token JWT
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (payload.exp < now) {
+          console.log('TOKEN EXPIRADO - Redirecionando para login');
+          localStorage.removeItem("admin_token");
+          router.push('/admin/login?error=token_expired');
+          return;
+        }
+        
+        console.log('TOKEN VÁLIDO - Usuário autenticado');
+        setUser({ username: payload.username, role: payload.role });
+      } catch (error) {
+        console.log('TOKEN INVÁLIDO - Redirecionando para login');
+        localStorage.removeItem("admin_token");
+        router.push('/admin/login?error=invalid_token');
+        return;
+      }
+    }
+    
     fetchData();
     fetchRaffleConfig();
     fetchBannerImage();

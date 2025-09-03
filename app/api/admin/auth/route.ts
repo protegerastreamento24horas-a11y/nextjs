@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       
       console.log('Token JWT gerado:', jwt.substring(0, 20) + '...');
 
-      // Criar resposta com token
+      // Criar resposta com token (sem definir cookie)
       const response = NextResponse.json({
         token: jwt,
         user: {
@@ -52,19 +52,6 @@ export async function POST(request: Request) {
         }
       });
       
-      console.log('Definindo cookie admin_token');
-      
-      // Adicionar token como cookie com todas as flags de segurança
-      const isProduction = process.env.NODE_ENV === 'production';
-      response.cookies.set('admin_token', jwt, {
-        httpOnly: true,
-        secure: isProduction,
-        maxAge: 60 * 60 * 24, // 24 horas
-        path: '/',
-        sameSite: 'strict'
-      });
-      
-      console.log('Cookies na resposta:', [...response.cookies]);
       console.log('Login bem-sucedido - resposta enviada');
       return response;
     } else {
