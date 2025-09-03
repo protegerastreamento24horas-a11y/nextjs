@@ -77,11 +77,11 @@ export default function AdminPanel() {
   const [uploadMessage, setUploadMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
 
   useEffect(() => {
     console.log('=== PAINEL ADMINISTRATIVO CARREGADO ===');
-    console.log('Usuário autenticado:', isAuthenticated, user);
+    console.log('Usuário autenticado:', isAuthenticated, authUser);
     
     if (!isAuthenticated) {
       console.log('USUÁRIO NÃO AUTENTICADO - Redirecionando para login');
@@ -90,12 +90,12 @@ export default function AdminPanel() {
     }
     
     // Se usuário está autenticado, definir no estado
-    setUser(user);
+    setUser(authUser);
     
     fetchData();
     fetchRaffleConfig();
     fetchBannerImage();
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, authUser, router]);
 
   const fetchData = async () => {
     try {
