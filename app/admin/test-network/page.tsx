@@ -12,10 +12,10 @@ export default function TestNetworkPage() {
     const info = {
       timestamp: new Date().toISOString(),
       online: navigator.onLine,
-      connection: typeof navigator.connection !== 'undefined' ? {
-        effectiveType: navigator.connection.effectiveType,
-        downlink: navigator.connection.downlink,
-        rtt: navigator.connection.rtt
+      connection: typeof (navigator as any).connection !== 'undefined' ? {
+        effectiveType: (navigator as any).connection.effectiveType,
+        downlink: (navigator as any).connection.downlink,
+        rtt: (navigator as any).connection.rtt
       } : 'Não disponível',
       language: navigator.language,
       platform: navigator.platform,
