@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import * as jose from 'jose';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,19 +25,35 @@ export async function middleware(request: NextRequest) {
   
   // Proteger rotas administrativas
   if (pathname.startsWith('/admin')) {
-    // Verificar apenas a existência do cookie admin_token
-    const hasToken = request.cookies.has('admin_token');
+    // Verificar token no localStorage (não é possível no middleware)
+    // Então vamos verificar o cookie admin_token
+    const token = request.cookies.get('admin_token')?.value;
     
     // Se não tem token, redirecionar para login
-    if (!hasToken) {
+    if (!token) {
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('redirectedFrom', pathname);
       loginUrl.searchParams.set('error', 'no_token');
       return NextResponse.redirect(loginUrl);
     }
     
-    // Se tem token, permitir acesso
-    return NextResponse.next();
+    // Verificar token JWT
+    try {
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
+      );
+      
+      await jose.jwtVerify(token, secret);
+      
+      // Token válido, permitir acesso
+      return NextResponse.next();
+    } catch (error) {
+      // Token inválido, redirecionar para login
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('redirectedFrom', pathname);
+      loginUrl.searchParams.set('error', 'invalid_token');
+      return NextResponse.redirect(loginUrl);
+    }
   }
   
   return NextResponse.next();
