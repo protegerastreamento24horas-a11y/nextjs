@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import * as jose from 'jose';
 
 // Em uma implementação real, essas credenciais viriam de variáveis de ambiente ou banco de dados
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'ADMIN';
@@ -28,24 +27,14 @@ export async function POST(request: Request) {
       
       console.log('Credenciais VÁLIDAS');
       
-      // Gerar token JWT
-      const secret = new TextEncoder().encode(
-        process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
-      );
+      // Gerar token simples (em produção, use um token mais seguro)
+      const token = 'simple-auth-token-' + Date.now();
       
-      const alg = 'HS256';
-      
-      const jwt = await new jose.SignJWT({ username, role: 'admin' })
-        .setProtectedHeader({ alg })
-        .setIssuedAt()
-        .setExpirationTime('24h')
-        .sign(secret);
-      
-      console.log('Token JWT gerado:', jwt.substring(0, 20) + '...');
+      console.log('Token simples gerado:', token);
 
-      // Criar resposta com token (sem definir cookie)
+      // Criar resposta com token
       const response = NextResponse.json({
-        token: jwt,
+        token: token,
         user: {
           username,
           role: 'admin'
