@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import * as jose from 'jose';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -8,6 +9,7 @@ export async function middleware(request: NextRequest) {
   const publicPaths = [
     '/',
     '/api/comprar',
+    '/api/pix/webhook',
     '/admin/login',
     '/admin/test-login'
   ];
@@ -22,19 +24,42 @@ export async function middleware(request: NextRequest) {
   
   // Proteger rotas administrativas
   if (pathname.startsWith('/admin')) {
-    // Verificar token de autenticação
-    const token = request.cookies.get('admin_token')?.value;
+    // Verificar token de autenticação em múltiplos locais
+    let token = request.cookies.get('admin_token')?.value;
+    
+    // Se não encontrou no cookie, tentar obter do header Authorization
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
     
     // Se não tem token, redirecionar para login
     if (!token) {
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('redirectedFrom', pathname);
+      loginUrl.searchParams.set('error', 'invalid_token');
       return NextResponse.redirect(loginUrl);
     }
     
-    // Para simplificar, vamos apenas permitir o acesso
-    // Em uma implementação real, você verificaria o token JWT aqui
-    return NextResponse.next();
+    // Verificar token JWT
+    try {
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
+      );
+      
+      await jose.jwtVerify(token, secret);
+      
+      // Token válido, permitir acesso
+      return NextResponse.next();
+    } catch (error) {
+      // Token inválido, redirecionar para login
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('redirectedFrom', pathname);
+      loginUrl.searchParams.set('error', 'invalid_token');
+      return NextResponse.redirect(loginUrl);
+    }
   }
   
   return NextResponse.next();

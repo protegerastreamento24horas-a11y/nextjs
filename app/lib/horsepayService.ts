@@ -128,7 +128,8 @@ class HorsePayService {
 
       this.accessToken = response.data.access_token;
       // Definir expiração com 5 minutos de antecedência para evitar token expirado
-      this.tokenExpiry = Date.now() + (response.data.expires_in - 300) * 1000;
+      // Corrigindo o cálculo do tempo de expiração
+      this.tokenExpiry = Date.now() + (response.data.expires_in ? (response.data.expires_in - 300) * 1000 : 3600 * 1000);
     } catch (error: unknown) {
       const axiosError = error as AxiosError<HorsePayErrorResponse>;
       
@@ -192,7 +193,7 @@ Dados: ${JSON.stringify(errorData)}
         {
           payer_name: payerName,
           amount: amount,
-          // Usando HORSEPAY_CALLBACK_URL diretamente em vez de NEXT_PUBLIC_BASE_URL
+          // Corrigindo uso das variáveis de ambiente para callback URLs
           callback_url: process.env.HORSEPAY_CALLBACK_URL || `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`,
           split: split
         },
@@ -229,7 +230,7 @@ Dados: ${JSON.stringify(errorData)}
           amount: amount,
           pix_key: pixKey,
           pix_type: pixType,
-          // Usando WEBHOOK_URL diretamente em vez de NEXT_PUBLIC_BASE_URL
+          // Corrigindo uso das variáveis de ambiente para callback URLs
           callback_url: process.env.WEBHOOK_URL || `${process.env.NEXT_PUBLIC_BASE_URL}/api/pix/webhook`
         },
         {

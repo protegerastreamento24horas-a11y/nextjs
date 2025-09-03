@@ -1,18 +1,42 @@
 import { NextResponse } from 'next/server';
 import * as jose from 'jose';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
+    // Tentar obter token de múltiplos locais
+    let token: string | undefined;
     
-    if (!authHeader?.startsWith('Bearer ')) {
+    // 1. Verificar header Authorization
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+    
+    // 2. Se não encontrou no header, verificar cookies do request
+    if (!token) {
+      const cookieHeader = request.headers.get('cookie');
+      if (cookieHeader) {
+        const cookieMatch = cookieHeader.match(/admin_token=([^;]+)/);
+        if (cookieMatch) {
+          token = cookieMatch[1];
+        }
+      }
+    }
+    
+    // 3. Se ainda não encontrou, verificar cookies do servidor (se disponível)
+    if (!token) {
+      const cookieStore = cookies();
+      const tokenCookie = cookieStore.get('admin_token');
+      token = tokenCookie?.value;
+    }
+
+    if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
         { status: 401 }
       );
     }
-
-    const token = authHeader.substring(7);
 
     // Verificar token JWT
     const secret = new TextEncoder().encode(

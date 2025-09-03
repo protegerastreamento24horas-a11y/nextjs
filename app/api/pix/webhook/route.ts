@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     
     // Validar se é um callback válido da HorsePay
     if (!horsepay.validateCallbackDeposit(body)) {
+      console.log('Invalid callback data received:', body);
       return NextResponse.json({ error: 'Invalid callback data' }, { status: 400 });
     }
 
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
     });
 
     if (!ticket) {
+      console.log('Ticket not found for external_id:', external_id);
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
@@ -46,7 +48,10 @@ export async function POST(request: Request) {
 
       if (raffleConfig) {
         // Verificar se o usuário ganhou com base na probabilidade configurada
-        const isWinner = Math.random() * 100 < raffleConfig.winningProbability;
+        const winningChance = Math.random() * 100;
+        const isWinner = winningChance < raffleConfig.winningProbability;
+        
+        console.log(`Winning calculation: random=${winningChance}, probability=${raffleConfig.winningProbability}, isWinner=${isWinner}`);
         
         if (isWinner) {
           // Verificar se os números sorteados são premiados
@@ -77,7 +82,7 @@ export async function POST(request: Request) {
                 data: {
                   isWinner: true,
                   prizeId: randomPrize.id,
-                  selectedNumber: drawnNumbers[0] // Para compatibilidade com versões anteriores
+                  drawnNumbers: drawnNumbers.join(',') // Atualizar com todos os números sorteados
                 }
               });
               
@@ -94,11 +99,16 @@ export async function POST(request: Request) {
               
               // Enviar e-mail para o vencedor (se tiver e-mail)
               if (ticket.userEmail) {
-                await sendWinnerEmail({
-                  userName: ticket.userName,
-                  userEmail: ticket.userEmail,
-                  prizeName: randomPrize.name
-                });
+                try {
+                  await sendWinnerEmail({
+                    userName: ticket.userName,
+                    userEmail: ticket.userEmail,
+                    prizeName: randomPrize.name
+                  });
+                  console.log(`Winner email sent to ${ticket.userEmail}`);
+                } catch (emailError) {
+                  console.error('Failed to send winner email:', emailError);
+                }
               }
             }
           }
@@ -117,6 +127,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
     
+    // Para outros status, apenas retornar sucesso
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Webhook processing error:', error);

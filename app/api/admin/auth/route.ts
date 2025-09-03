@@ -44,10 +44,11 @@ export async function POST(request: Request) {
         }
       });
       
-      // Adicionar token como cookie
+      // Adicionar token como cookie com todas as flags de segurança
+      const isProduction = process.env.NODE_ENV === 'production';
       response.cookies.set('admin_token', jwt, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         maxAge: 60 * 60 * 24, // 24 horas
         path: '/',
         sameSite: 'strict'

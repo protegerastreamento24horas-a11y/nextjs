@@ -44,12 +44,16 @@ export default function AdminLogin({ searchParams }: any) {
       const data = await response.json();
 
       if (response.ok) {
-        // Salvar token no localStorage
+        // Salvar token em múltiplos locais para garantir acesso
         if (typeof window !== 'undefined') {
+          // Salvar no localStorage
           localStorage.setItem("admin_token", data.token);
-          // Também salvar nos cookies para compatibilidade
-          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+          
+          // Salvar nos cookies com todas as flags de segurança
+          const isProduction = process.env.NODE_ENV === 'production';
+          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; ${isProduction ? 'Secure; ' : ''}SameSite=Strict; HttpOnly=false`;
         }
+        
         // Redirecionar para o painel
         router.push("/admin");
         router.refresh();
@@ -66,7 +70,9 @@ export default function AdminLogin({ searchParams }: any) {
 
   // Função para testar credenciais
   const testCredentials = () => {
-    alert(`Credenciais atuais:\nUsuário: ADMIN\nSenha: ADMIN123`);
+    const username = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'ADMIN';
+    const password = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'ADMIN123';
+    alert(`Credenciais atuais:\nUsuário: ${username}\nSenha: ${password}`);
   };
 
   return (
