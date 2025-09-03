@@ -136,12 +136,7 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-4 text-center">
-          <button 
-            onClick={testCredentials}
-            className="text-xs text-gray-500 hover:text-gray-400 underline"
-          >
-            Mostrar credenciais de teste
-          </button>
+          {/* Removido botão de credenciais de teste que causava erro */}
         </div>
 
         <div className="mt-8 text-center text-xs text-gray-500">
