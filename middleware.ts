@@ -22,9 +22,9 @@ export async function middleware(request: NextRequest) {
   
   // Registrar cookies
   console.log('Cookies:');
-  request.cookies.forEach((value, key) => {
+  for (const [key, value] of request.cookies) {
     console.log(`  ${key}: ${value}`);
-  });
+  }
   
   // Rotas públicas que não requerem autenticação
   const publicPaths = [
