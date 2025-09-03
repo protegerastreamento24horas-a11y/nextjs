@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import * as jose from 'jose';
-import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
   try {
@@ -24,12 +23,6 @@ export async function GET(request: Request) {
       }
     }
     
-    // 3. Se ainda não encontrou, verificar cookies do servidor (se disponível)
-    if (!token) {
-      const cookieStore = cookies();
-      const tokenCookie = cookieStore.get('admin_token');
-      token = tokenCookie?.value;
-    }
 
     if (!token) {
       return NextResponse.json(
