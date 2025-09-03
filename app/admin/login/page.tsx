@@ -44,14 +44,9 @@ export default function AdminLogin({ searchParams }: any) {
       const data = await response.json();
 
       if (response.ok) {
-        // Salvar token em múltiplos locais para garantir acesso
+        // Salvar token no localStorage para acesso seguro
         if (typeof window !== 'undefined') {
-          // Salvar no localStorage
           localStorage.setItem("admin_token", data.token);
-          
-          // Salvar nos cookies com todas as flags de segurança
-          const isProduction = process.env.NODE_ENV === 'production';
-          document.cookie = `admin_token=${data.token}; path=/; max-age=86400; ${isProduction ? 'Secure; ' : ''}SameSite=Strict; HttpOnly=false`;
         }
         
         // Redirecionar para o painel
