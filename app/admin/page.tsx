@@ -87,50 +87,13 @@ export default function AdminPanel() {
   const [configError, setConfigError] = useState("");
 
   useEffect(() => {
-    checkAuth();
+    // Não precisamos mais verificar a autenticação aqui
+    // O middleware já cuida disso
+    setUser({ username: 'ADMIN', role: 'admin' });
     fetchData();
     fetchRaffleConfig();
     fetchBannerImage();
   }, []);
-
-  const checkAuth = async () => {
-    try {
-      // Verificar token no localStorage primeiro
-      let token = localStorage.getItem('admin_token');
-      
-      // Se não encontrar no localStorage, redirecionar para login
-      if (!token) {
-        router.push('/admin/login?error=no_token');
-        return;
-      }
-
-      // Verificar se o token é válido (simplificado por enquanto)
-      // Vamos apenas verificar se conseguimos fazer uma chamada protegida
-      const response = await fetch('/api/admin/tickets', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        // Se a verificação falhar, limpar tokens e redirecionar para login
-        localStorage.removeItem('admin_token');
-        document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        router.push('/admin/login?error=invalid_token');
-        return;
-      }
-
-      // Se chegou aqui, o token é válido
-      // Vamos buscar os dados do usuário de outra forma
-      setUser({ username: 'ADMIN', role: 'admin' });
-    } catch (error) {
-      console.error("Erro na autenticação:", error);
-      // Em caso de erro, limpar tokens e redirecionar para login
-      localStorage.removeItem('admin_token');
-      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      router.push('/admin/login?error=auth_failed');
-    }
-  };
 
   const fetchData = async () => {
     try {
