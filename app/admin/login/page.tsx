@@ -32,8 +32,19 @@ export default function AdminLoginPage() {
       console.log('Dados da resposta:', data);
 
       if (response.ok) {
+        // Salvar token no localStorage para acesso seguro
+        if (typeof window !== 'undefined') {
+          console.log('Salvando token no localStorage');
+          localStorage.setItem("admin_token", data.token);
+          console.log('Token salvo no localStorage:', data.token);
+          
+          // Verificar se o token foi realmente salvo
+          const savedToken = localStorage.getItem("admin_token");
+          console.log('Token recuperado do localStorage:', savedToken);
+        }
+        
         // Usar o contexto de autenticação para fazer login
-        console.log('Login bem-sucedido, usando contexto de autenticação');
+        console.log('Usando contexto de autenticação');
         login(data.token);
         
         // Redirecionar para o painel
