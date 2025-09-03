@@ -8,6 +8,11 @@ export async function middleware(request: NextRequest) {
   console.log('Pathname:', pathname);
   console.log('Method:', request.method);
   console.log('URL completa:', request.url);
+  console.log('Protocolo:', request.nextUrl.protocol);
+  console.log('Host:', request.nextUrl.host);
+  console.log('Hostname:', request.nextUrl.hostname);
+  console.log('Porta:', request.nextUrl.port);
+  console.log('Origem:', request.nextUrl.origin);
   
   // Registrar headers
   console.log('Headers:');
@@ -31,7 +36,8 @@ export async function middleware(request: NextRequest) {
     '/admin/test',
     '/admin/test-auth',
     '/admin/test-storage',
-    '/admin/test-middleware'
+    '/admin/test-middleware',
+    '/admin/test-middleware-details'
   ];
   
   // Verificar se a rota é pública
