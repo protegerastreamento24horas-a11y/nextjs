@@ -75,6 +75,17 @@ export default function AdminPanel() {
   const [bannerImage, setBannerImage] = useState<string>('/banner-bg.svg');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
+  
+  // Estados para configuração da rifa
+  const [ticketPrice, setTicketPrice] = useState('');
+  const [prizeValue, setPrizeValue] = useState('');
+  const [maxNumber, setMaxNumber] = useState('');
+  const [winningNumbers, setWinningNumbers] = useState('');
+  const [autoDrawnNumbers, setAutoDrawnNumbers] = useState('');
+  const [winningProbability, setWinningProbability] = useState('');
+  const [isActive, setIsActive] = useState(false);
+  const [configError, setConfigError] = useState('');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { isAuthenticated, user: authUser } = useAuth();
