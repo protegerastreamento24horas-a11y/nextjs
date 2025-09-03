@@ -64,6 +64,7 @@ export async function POST(request: Request) {
         sameSite: 'strict'
       });
       
+      console.log('Cookies na resposta:', [...response.cookies]);
       console.log('Login bem-sucedido - resposta enviada');
       return response;
     } else {
