@@ -37,7 +37,8 @@ export async function middleware(request: NextRequest) {
     '/admin/test-auth',
     '/admin/test-storage',
     '/admin/test-middleware',
-    '/admin/test-middleware-details'
+    '/admin/test-middleware-details',
+    '/admin/test-network'
   ];
   
   // Verificar se a rota é pública
