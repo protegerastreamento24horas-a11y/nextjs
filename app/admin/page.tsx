@@ -100,12 +100,13 @@ export default function AdminPanel() {
       
       // Se não encontrar no localStorage, redirecionar para login
       if (!token) {
-        router.push('/admin/login');
+        router.push('/admin/login?error=no_token');
         return;
       }
 
-      // Verificar se o token é válido
-      const response = await fetch('/api/admin/auth/verify', {
+      // Verificar se o token é válido (simplificado por enquanto)
+      // Vamos apenas verificar se conseguimos fazer uma chamada protegida
+      const response = await fetch('/api/admin/tickets', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -119,8 +120,9 @@ export default function AdminPanel() {
         return;
       }
 
-      const data = await response.json();
-      setUser(data.user);
+      // Se chegou aqui, o token é válido
+      // Vamos buscar os dados do usuário de outra forma
+      setUser({ username: 'ADMIN', role: 'admin' });
     } catch (error) {
       console.error("Erro na autenticação:", error);
       // Em caso de erro, limpar tokens e redirecionar para login

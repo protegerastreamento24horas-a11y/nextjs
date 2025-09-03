@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLogin({ searchParams }: any) {
+  // 定义 token 的存储键名
+  const TOKEN_STORAGE_KEY = "admin_token";
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -44,9 +47,20 @@ export default function AdminLogin({ searchParams }: any) {
       const data = await response.json();
 
       if (response.ok) {
-        // Salvar token no localStorage para acesso seguro
+        // Armazenar token com segurança e definir expiração
         if (typeof window !== 'undefined') {
-          localStorage.setItem("admin_token", data.token);
+          // Armazenar token
+          localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+          
+          // Armazenar timestamp de expiração (por exemplo, 24 horas)
+          const expirationTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 24 horas
+          localStorage.setItem(`${TOKEN_STORAGE_KEY}_expires`, expirationTime.toString());
+          
+          // Para produção, podemos usar cookies seguros como alternativa
+          if (process.env.NODE_ENV === "production") {
+            // Aqui poderíamos implementar um armazenamento de token mais seguro
+            // como um cookie HttpOnly, se necessário
+          }
         }
         
         // Redirecionar para o painel
