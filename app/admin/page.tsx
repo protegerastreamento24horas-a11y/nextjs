@@ -98,18 +98,7 @@ export default function AdminPanel() {
       // Verificar token no localStorage primeiro
       let token = localStorage.getItem('admin_token');
       
-      // Se não encontrar no localStorage, verificar nos cookies
-      if (!token) {
-        // Esta é uma solução alternativa para acessar cookies no cliente
-        // Em produção, seria melhor usar uma abordagem server-side
-        const cookies = document.cookie.split(';').map(cookie => cookie.trim());
-        const tokenCookie = cookies.find(cookie => cookie.startsWith('admin_token='));
-        if (tokenCookie) {
-          token = tokenCookie.split('=')[1];
-        }
-      }
-      
-      // Se ainda não encontrar token, redirecionar para login
+      // Se não encontrar no localStorage, redirecionar para login
       if (!token) {
         router.push('/admin/login');
         return;
@@ -126,7 +115,7 @@ export default function AdminPanel() {
         // Se a verificação falhar, limpar tokens e redirecionar para login
         localStorage.removeItem('admin_token');
         document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        router.push('/admin/login');
+        router.push('/admin/login?error=invalid_token');
         return;
       }
 
@@ -137,7 +126,7 @@ export default function AdminPanel() {
       // Em caso de erro, limpar tokens e redirecionar para login
       localStorage.removeItem('admin_token');
       document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      router.push('/admin/login');
+      router.push('/admin/login?error=auth_failed');
     }
   };
 
