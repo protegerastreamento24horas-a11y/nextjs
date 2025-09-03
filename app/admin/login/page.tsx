@@ -1,34 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../AuthContext";
 
-export default function AdminLogin({ searchParams }: any) {
-  // Definir token do admin no localStorage
-  const TOKEN_STORAGE_KEY = "admin_token";
-  
+export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-  // Verificar se há mensagens de erro nos parâmetros da URL
-  useEffect(() => {
-    // Resolver searchParams se for uma Promise
-    Promise.resolve(searchParams).then((params) => {
-      const urlError = params?.error;
-      const redirectedFrom = params?.redirectedFrom;
-      
-      if (urlError === 'invalid_token') {
-        setError('Sessão expirada. Por favor, faça login novamente.');
-      }
-      
-      if (redirectedFrom) {
-        setError(`Acesso negado à página ${redirectedFrom}. Faça login para continuar.`);
-      }
-    });
-  }, [searchParams]);
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,10 +23,8 @@ export default function AdminLogin({ searchParams }: any) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest" // Indicar que é uma requisição AJAX
         },
         body: JSON.stringify({ username, password }),
-        credentials: 'omit' // Explicitamente omitir cookies
       });
 
       console.log('Resposta do login:', response.status);
@@ -52,21 +32,9 @@ export default function AdminLogin({ searchParams }: any) {
       console.log('Dados da resposta:', data);
 
       if (response.ok) {
-        // Validação adicional da resposta
-        if (!data.token) {
-          throw new Error('Token não encontrado na resposta');
-        }
-        
-        // Salvar token no localStorage para acesso seguro
-        if (typeof window !== 'undefined') {
-          console.log('Salvando token no localStorage');
-          localStorage.setItem("admin_token", data.token);
-          console.log('Token salvo:', data.token.substring(0, 20) + '...');
-          
-          // Definir um tempo de expiração para o token (opcional)
-          const expirationTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 24 horas
-          localStorage.setItem("admin_token_expiration", expirationTime.toString());
-        }
+        // Usar o contexto de autenticação para fazer login
+        console.log('Login bem-sucedido, usando contexto de autenticação');
+        login(data.token);
         
         // Redirecionar para o painel
         console.log('Redirecionando para /admin');
@@ -78,41 +46,10 @@ export default function AdminLogin({ searchParams }: any) {
       }
     } catch (err) {
       console.error("Erro de conexão:", err);
-      setError("Erro de conexão. Verifique sua internet.");
+      setError("Erro de conexão");
     } finally {
       setLoading(false);
     }
-    
-    // Forçar atualização do estado
-    router.refresh();
-  };
-
-  // Função para testar credenciais
-  const testCredentials = () => {
-    const username = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'ADMIN';
-    const password = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'ADMIN123';
-    // Usar um modal mais seguro que não depende de alert()
-    const modal = document.createElement('div');
-    modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4";
-    
-    modal.innerHTML = `
-      <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-        <h3 class="text-lg font-bold mb-4">Credenciais de Teste</h3>
-        <div class="space-y-2">
-          <p class="text-sm">Usuário: <span class="font-mono bg-gray-700 px-2 py-1 rounded">${username}</span></p>
-          <p class="text-sm">Senha: <span class="font-mono bg-gray-700 px-2 py-1 rounded">${password}</span></p>
-        </div>
-        <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm">
-          Fechar
-        </button>
-      </div>
-    `;
-    
-    modal.querySelector('button')?.addEventListener('click', () => {
-      document.body.removeChild(modal);
-    });
-    
-    document.body.appendChild(modal);
   };
 
   return (
