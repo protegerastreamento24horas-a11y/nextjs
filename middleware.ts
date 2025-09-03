@@ -7,9 +7,19 @@ export async function middleware(request: NextRequest) {
   console.log('=== MIDDLEWARE EXECUTADO ===');
   console.log('Pathname:', pathname);
   console.log('Method:', request.method);
+  console.log('URL completa:', request.url);
+  
+  // Registrar headers
+  console.log('Headers:');
+  request.headers.forEach((value, key) => {
+    console.log(`  ${key}: ${value}`);
+  });
   
   // Registrar cookies
-  console.log('Cookies:', [...request.cookies]);
+  console.log('Cookies:');
+  request.cookies.forEach((value, key) => {
+    console.log(`  ${key}: ${value}`);
+  });
   
   // Rotas públicas que não requerem autenticação
   const publicPaths = [
@@ -20,7 +30,8 @@ export async function middleware(request: NextRequest) {
     '/admin/test-login',
     '/admin/test',
     '/admin/test-auth',
-    '/admin/test-storage'
+    '/admin/test-storage',
+    '/admin/test-middleware'
   ];
   
   // Verificar se a rota é pública
