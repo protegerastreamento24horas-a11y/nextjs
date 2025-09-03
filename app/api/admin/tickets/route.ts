@@ -4,6 +4,20 @@ import * as jose from 'jose';
 
 const prisma = new PrismaClient();
 
+// Função reutilizável para verificar o token JWT
+async function verifyToken(token: string): Promise<boolean> {
+  const secret = new TextEncoder().encode(
+    process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
+  );
+
+  try {
+    await jose.jwtVerify(token, secret);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function GET(request: Request) {
   try {
     // Verificar token de autenticação
@@ -18,13 +32,8 @@ export async function GET(request: Request) {
     const token = authHeader.substring(7);
     
     // Verificar token JWT
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-only'
-    );
-    
-    try {
-      await jose.jwtVerify(token, secret);
-    } catch (error) {
+    const isValid = await verifyToken(token);
+    if (!isValid) {
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
