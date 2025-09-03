@@ -9,9 +9,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { username, password } = body;
+    
+    console.log('=== TENTATIVA DE LOGIN ===');
+    console.log('Credenciais recebidas:', { username, password });
 
     // Validar credenciais
     if (!username || !password) {
+      console.log('Credenciais faltando');
       return NextResponse.json(
         { error: 'Usuário e senha são obrigatórios' },
         { status: 400 }
@@ -21,6 +25,8 @@ export async function POST(request: Request) {
     // Verificar credenciais (em produção, use bcrypt ou outro método seguro)
     if (username.toString().trim() === ADMIN_USERNAME.toString().trim() && 
         password.toString().trim() === ADMIN_PASSWORD.toString().trim()) {
+      
+      console.log('Credenciais VÁLIDAS');
       
       // Gerar token JWT
       const secret = new TextEncoder().encode(
@@ -34,6 +40,8 @@ export async function POST(request: Request) {
         .setIssuedAt()
         .setExpirationTime('24h')
         .sign(secret);
+      
+      console.log('Token JWT gerado:', jwt.substring(0, 20) + '...');
 
       // Criar resposta com token
       const response = NextResponse.json({
@@ -43,6 +51,8 @@ export async function POST(request: Request) {
           role: 'admin'
         }
       });
+      
+      console.log('Definindo cookie admin_token');
       
       // Adicionar token como cookie com todas as flags de segurança
       const isProduction = process.env.NODE_ENV === 'production';
@@ -54,8 +64,10 @@ export async function POST(request: Request) {
         sameSite: 'strict'
       });
       
+      console.log('Login bem-sucedido - resposta enviada');
       return response;
     } else {
+      console.log('Credenciais INVÁLIDAS');
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }

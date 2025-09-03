@@ -87,6 +87,14 @@ export default function AdminPanel() {
   const [configError, setConfigError] = useState("");
 
   useEffect(() => {
+    console.log('=== PAINEL ADMINISTRATIVO CARREGADO ===');
+    
+    // Verificar se temos token no localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem("admin_token");
+      console.log('Token no localStorage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
+    }
+    
     // Não precisamos mais verificar a autenticação aqui
     // O middleware já cuida disso
     setUser({ username: 'ADMIN', role: 'admin' });

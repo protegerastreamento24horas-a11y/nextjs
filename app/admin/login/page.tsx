@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLogin({ searchParams }: any) {
-  // 定义 token 的存储键名
+  // Definir token do admin no localStorage
   const TOKEN_STORAGE_KEY = "admin_token";
   
   const [username, setUsername] = useState("");
@@ -36,6 +36,7 @@ export default function AdminLogin({ searchParams }: any) {
     setError("");
 
     try {
+      console.log('Tentando fazer login com:', { username, password });
       const response = await fetch("/api/admin/auth", {
         method: "POST",
         headers: {
@@ -44,34 +45,29 @@ export default function AdminLogin({ searchParams }: any) {
         body: JSON.stringify({ username, password }),
       });
 
+      console.log('Resposta do login:', response.status);
       const data = await response.json();
+      console.log('Dados da resposta:', data);
 
       if (response.ok) {
-        // Armazenar token com segurança e definir expiração
+        // Salvar token no localStorage para acesso seguro
         if (typeof window !== 'undefined') {
-          // Armazenar token
-          localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
-          
-          // Armazenar timestamp de expiração (por exemplo, 24 horas)
-          const expirationTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 24 horas
-          localStorage.setItem(`${TOKEN_STORAGE_KEY}_expires`, expirationTime.toString());
-          
-          // Para produção, podemos usar cookies seguros como alternativa
-          if (process.env.NODE_ENV === "production") {
-            // Aqui poderíamos implementar um armazenamento de token mais seguro
-            // como um cookie HttpOnly, se necessário
-          }
+          console.log('Salvando token no localStorage');
+          localStorage.setItem("admin_token", data.token);
+          console.log('Token salvo:', data.token.substring(0, 20) + '...');
         }
         
         // Redirecionar para o painel
+        console.log('Redirecionando para /admin');
         router.push("/admin");
         router.refresh();
       } else {
+        console.log('Erro no login:', data.error);
         setError(data.error || "Erro ao fazer login");
       }
     } catch (err) {
-      setError("Erro de conexão");
       console.error("Erro de conexão:", err);
+      setError("Erro de conexão");
     } finally {
       setLoading(false);
     }
