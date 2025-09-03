@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useAuth } from './AuthContext';
 
 ChartJS.register(
   CategoryScale,
@@ -76,80 +77,25 @@ export default function AdminPanel() {
   const [uploadMessage, setUploadMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
-  // Form states for raffle config
-  const [ticketPrice, setTicketPrice] = useState("1000");
-  const [prizeValue, setPrizeValue] = useState("10000");
-  const [maxNumber, setMaxNumber] = useState("10000");
-  const [winningNumbers, setWinningNumbers] = useState("100,88,14");
-  const [autoDrawnNumbers, setAutoDrawnNumbers] = useState("1");
-  const [winningProbability, setWinningProbability] = useState("100");
-  const [configError, setConfigError] = useState("");
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     console.log('=== PAINEL ADMINISTRATIVO CARREGADO ===');
+    console.log('Usuário autenticado:', isAuthenticated, user);
     
-    let authCheckInterval: NodeJS.Timeout;
-    
-    const checkAuth = () => {
-      // Verificar se temos token no localStorage
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem("admin_token");
-        console.log('Token no localStorage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
-        
-        if (!token) {
-          console.log('SEM TOKEN - Redirecionando para login');
-          router.push('/admin/login?error=no_token');
-          return false;
-        }
-        
-        // Verificar token JWT
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          const now = Math.floor(Date.now() / 1000);
-          
-          if (payload.exp < now) {
-            console.log('TOKEN EXPIRADO - Redirecionando para login');
-            localStorage.removeItem("admin_token");
-            router.push('/admin/login?error=token_expired');
-            return false;
-          }
-          
-          console.log('TOKEN VÁLIDO - Usuário autenticado');
-          setUser({ username: payload.username, role: payload.role });
-          return true;
-        } catch (error) {
-          console.log('TOKEN INVÁLIDO - Redirecionando para login');
-          localStorage.removeItem("admin_token");
-          router.push('/admin/login?error=invalid_token');
-          return false;
-        }
-      }
-      return false;
-    };
-    
-    // Verificação inicial
-    const isAuthenticated = checkAuth();
-    
-    if (isAuthenticated) {
-      fetchData();
-      fetchRaffleConfig();
-      fetchBannerImage();
-      
-      // Verificação periódica a cada 5 minutos
-      authCheckInterval = setInterval(() => {
-        console.log('=== VERIFICAÇÃO PERIÓDICA DE AUTENTICAÇÃO ===');
-        checkAuth();
-      }, 5 * 60 * 1000); // 5 minutos
+    if (!isAuthenticated) {
+      console.log('USUÁRIO NÃO AUTENTICADO - Redirecionando para login');
+      router.push('/admin/login?error=not_authenticated');
+      return;
     }
     
-    // Limpar intervalo quando o componente for desmontado
-    return () => {
-      if (authCheckInterval) {
-        clearInterval(authCheckInterval);
-      }
-    };
-  }, []);
+    // Se usuário está autenticado, definir no estado
+    setUser(user);
+    
+    fetchData();
+    fetchRaffleConfig();
+    fetchBannerImage();
+  }, [isAuthenticated, user, router]);
 
   const fetchData = async () => {
     try {
