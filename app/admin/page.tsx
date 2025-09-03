@@ -89,42 +89,66 @@ export default function AdminPanel() {
   useEffect(() => {
     console.log('=== PAINEL ADMINISTRATIVO CARREGADO ===');
     
-    // Verificar se temos token no localStorage
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem("admin_token");
-      console.log('Token no localStorage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
-      
-      if (!token) {
-        console.log('SEM TOKEN - Redirecionando para login');
-        router.push('/admin/login?error=no_token');
-        return;
-      }
-      
-      // Verificar token JWT
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const now = Math.floor(Date.now() / 1000);
+    let authCheckInterval: NodeJS.Timeout;
+    
+    const checkAuth = () => {
+      // Verificar se temos token no localStorage
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem("admin_token");
+        console.log('Token no localStorage:', token ? token.substring(0, 20) + '...' : 'NENHUM');
         
-        if (payload.exp < now) {
-          console.log('TOKEN EXPIRADO - Redirecionando para login');
-          localStorage.removeItem("admin_token");
-          router.push('/admin/login?error=token_expired');
-          return;
+        if (!token) {
+          console.log('SEM TOKEN - Redirecionando para login');
+          router.push('/admin/login?error=no_token');
+          return false;
         }
         
-        console.log('TOKEN VÁLIDO - Usuário autenticado');
-        setUser({ username: payload.username, role: payload.role });
-      } catch (error) {
-        console.log('TOKEN INVÁLIDO - Redirecionando para login');
-        localStorage.removeItem("admin_token");
-        router.push('/admin/login?error=invalid_token');
-        return;
+        // Verificar token JWT
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const now = Math.floor(Date.now() / 1000);
+          
+          if (payload.exp < now) {
+            console.log('TOKEN EXPIRADO - Redirecionando para login');
+            localStorage.removeItem("admin_token");
+            router.push('/admin/login?error=token_expired');
+            return false;
+          }
+          
+          console.log('TOKEN VÁLIDO - Usuário autenticado');
+          setUser({ username: payload.username, role: payload.role });
+          return true;
+        } catch (error) {
+          console.log('TOKEN INVÁLIDO - Redirecionando para login');
+          localStorage.removeItem("admin_token");
+          router.push('/admin/login?error=invalid_token');
+          return false;
+        }
       }
+      return false;
+    };
+    
+    // Verificação inicial
+    const isAuthenticated = checkAuth();
+    
+    if (isAuthenticated) {
+      fetchData();
+      fetchRaffleConfig();
+      fetchBannerImage();
+      
+      // Verificação periódica a cada 5 minutos
+      authCheckInterval = setInterval(() => {
+        console.log('=== VERIFICAÇÃO PERIÓDICA DE AUTENTICAÇÃO ===');
+        checkAuth();
+      }, 5 * 60 * 1000); // 5 minutos
     }
     
-    fetchData();
-    fetchRaffleConfig();
-    fetchBannerImage();
+    // Limpar intervalo quando o componente for desmontado
+    return () => {
+      if (authCheckInterval) {
+        clearInterval(authCheckInterval);
+      }
+    };
   }, []);
 
   const fetchData = async () => {
