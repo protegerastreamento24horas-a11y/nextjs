@@ -192,7 +192,7 @@ export default function AdminPanel() {
         // Token inválido, redirecionar para login
         localStorage.removeItem('admin_token');
         document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        router.push('/admin/login');
+        router.push('/admin/login?error=invalid_token');
       }
     } catch (error) {
       console.error("Erro ao buscar configuração da rifa:", error);
@@ -215,7 +215,7 @@ export default function AdminPanel() {
         // Token inválido, redirecionar para login
         localStorage.removeItem('admin_token');
         document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        router.push('/admin/login');
+        router.push('/admin/login?error=invalid_token');
       }
     } catch (error) {
       console.error("Erro ao buscar imagem do banner:", error);
